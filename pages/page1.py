@@ -41,7 +41,10 @@ page1_layout = html.Div([
         ),
     html.H1("Visualization of Tri-nucleotide Context Mutations"),
     dcc.Graph(
-        id='mutation-plot'
+        id='signature-plot'
+    ),
+    dcc.Graph(
+        id='reprint-plot'
     ),
 ])
 
@@ -57,7 +60,8 @@ def set_options(selected_category):
 import plotly.graph_objects as go
 
 @app.callback(
-    Output('mutation-plot', 'figure'),
+    [Output('signature-plot', 'figure'),
+     Output('reprint-plot', 'figure')],
     [Input('signatures-dropdown-cancer', 'value'),
      Input('dropdown-cancer', 'value')]
 )
@@ -65,9 +69,12 @@ def update_graph(selected_signatures, selected_file):
     if not selected_signatures:
         return go.Figure()
 
-    df = pd.read_csv(f"data/signatures_organ/latest/{selected_file}", index_col=0)
+    df_signatures = pd.read_csv(f"/Users/mw/PycharmProjects/RePrint/data/signatures/COSMIC_v2_SBS_GRCh37.txt", sep='\t', index_col=0)
 
-    fig = go.Figure()
+    df_reprint = pd.read_csv(f"/Users/mw/PycharmProjects/RePrint/data/signatures/COSMIC_v2_SBS_GRCh37_reprint.txt",  sep='\t', index_col=0)
 
-
-    return create_main_dashboard(df[selected_signatures[0]].to_numpy()*100)
+    print(df_signatures.columns)
+    return (create_main_dashboard(df_signatures['Signature_6'].to_numpy()*100,
+                                  title='Frequency of Specific Tri-nucleotide Context Mutations by Mutation Type'),
+            create_main_dashboard(df_reprint['Signature_6'].to_numpy()*100,
+                                  title='Reprint - Frequency of Specific Tri-nucleotide Context Mutations by Mutation Type'))

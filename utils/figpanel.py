@@ -2,7 +2,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 
 
-def create_main_dashboard(frequencies):
+def create_main_dashboard(frequencies, title):
     import plotly.graph_objects as go
     import numpy as np
 
@@ -54,18 +54,25 @@ def create_main_dashboard(frequencies):
                            font=dict(color='white', size=12))
 
     # Dodanie tytułów i formatowanie osi
+
     fig.update_layout(
-        title='Frequency of Specific Tri-nucleotide Context Mutations by Mutation Type',
+        title=title,
         xaxis_title='Mutation Context',
         yaxis_title='Frequency (%)',
         xaxis_tickangle=-45,
         template='plotly_white',
-        barmode='group',  # Grupowanie słupków
+        barmode='group',
         legend_title='Mutation Type',
-        yaxis_range=[0, 120]  # Zwiększenie zakresu osi Y, aby zmieścić prostokąty
+        yaxis_range=[0, 120],
+        xaxis=dict(
+            tickmode='linear',
+            dtick=1  # Ustawia etykiety co jeden kontekst
+        ),
+        yaxis=dict(
+            tickfont=dict(size=6)
+        )
     )
 
-    # Wyświetlenie wykresu
 
     return fig
 

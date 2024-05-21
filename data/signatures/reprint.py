@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 
-name = 'COSMIC_v1_SBS_GRCh37.txt'
+name = 'hap1_parentchild96_percentage.txt'
 data = pd.read_csv(name, sep='\t')
 
 

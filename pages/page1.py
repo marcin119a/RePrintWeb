@@ -11,6 +11,8 @@ import pandas as pd
 
 
 data = {
+    'hap1_parentchild96_percentage.txt': pd.read_csv('data/signatures/hap1_parentchild96_percentage.txt', sep='\t').columns[1:].to_list(),
+    'COSMIC_v1_SBS_GRCh37.txt': pd.read_csv('data/signatures/COSMIC_v1_SBS_GRCh37.txt', sep='\t').columns[1:].to_list(),
     'COSMIC_v2_SBS_GRCh37.txt': pd.read_csv('data/signatures/COSMIC_v2_SBS_GRCh37.txt', sep='\t').columns[1:].to_list(),
     'COSMIC_v3.1_SBS_GRCh37.txt': pd.read_csv('data/signatures/COSMIC_v3.1_SBS_GRCh37.txt', sep='\t').columns[1:].to_list(),
     'COSMIC_v3.4_SBS_GRCh37.txt': pd.read_csv('data/signatures/COSMIC_v3.4_SBS_GRCh37.txt', sep='\t').columns[1:].to_list(),
@@ -24,6 +26,7 @@ page1_layout = html.Div([
         dcc.Dropdown(
             id='dropdown-cancer',
             options=[
+                {'label': 'hap1_parentchild96_percentage.txt', 'value': 'hap1_parentchild96_percentage.txt'},
                 {'label': 'COSMIC_v1_SBS_GRCh37.txt', 'value': 'COSMIC_v1_SBS_GRCh37.txt'},
                 {'label': 'COSMIC_v2_SBS_GRCh37.txt', 'value': 'COSMIC_v2_SBS_GRCh37.txt'},
                 {'label': 'COSMIC_v3.1_SBS_GRCh37.txt', 'value': 'COSMIC_v3.1_SBS_GRCh37.txt'},

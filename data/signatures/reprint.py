@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 
-name = 'COSMIC_v3_SBS_GRCh37.txt'
+name = 'COSMIC_v1_SBS_GRCh37.txt'
 data = pd.read_csv(name, sep='\t')
 
 

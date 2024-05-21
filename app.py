@@ -11,11 +11,6 @@ app.layout = html.Div([
     html.Div(id='page-content'),
 ])
 
-@app.callback(Output('url', 'pathname'),
-              [Input('page1-button', 'n_clicks')],
-              prevent_initial_call=True)
-def redirect_to_page1(n_clicks):
-    return '/page1?example=True'
 
 
 @app.callback(Output('page-content', 'children'),

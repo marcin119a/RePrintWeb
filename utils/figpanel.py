@@ -19,7 +19,7 @@ def create_main_dashboard(df, signature, title):
     # Definiowanie kolorów dla każdej grupy mutacji
     colors = {
         'C>A': 'blue',
-        'C>G': 'green',
+        'C>G': 'black',
         'C>T': 'red',
         'T>A': 'purple',
         'T>C': 'orange',
@@ -77,31 +77,29 @@ def create_main_dashboard(df, signature, title):
 
     return fig
 
+
 def create_heatmap(df):
     import plotly.graph_objects as go
     import plotly.figure_factory as ff
     from scipy.spatial.distance import pdist, squareform
 
-    # Generate random data for demonstration
     df = df.T
     labels = df.index.tolist()
-    # Initialize figure by creating upper dendrogram
+
     fig = ff.create_dendrogram(df.values, labels=labels, orientation='bottom')
     fig.for_each_trace(lambda trace: trace.update(visible=False))
 
     for i in range(len(fig['data'])):
         fig['data'][i]['yaxis'] = 'y2'
 
-    # Create Side Dendrogram
     dendro_side = ff.create_dendrogram(df.values, orientation='right')
     for i in range(len(dendro_side['data'])):
         dendro_side['data'][i]['xaxis'] = 'x2'
 
-    # Add Side Dendrogram Data to Figure
     for data in dendro_side['data']:
         fig.add_trace(data)
 
-    # Create Heatmap
+    #  Create Heatmap
     dendro_leaves = dendro_side['layout']['yaxis']['ticktext']
     dendro_leaves = list(map(int, dendro_leaves))
     data_dist = pdist(df.values)
@@ -114,7 +112,11 @@ def create_heatmap(df):
             x=dendro_leaves,
             y=dendro_leaves,
             z=heat_data,
-            colorscale='Blues'
+            colorscale='Blues',
+            colorbar=dict(
+                x=1.2,
+                xpad=10
+            )
         )
     ]
 
@@ -126,7 +128,7 @@ def create_heatmap(df):
         fig.add_trace(data)
 
     # Edit Layout
-    fig.update_layout({'width': 800, 'height': 800,
+    fig.update_layout({'width': 600, 'height': 600,
                        'showlegend': False, 'hovermode': 'closest',
                        })
 
@@ -136,7 +138,10 @@ def create_heatmap(df):
                              'showgrid': False,
                              'showline': False,
                              'zeroline': False,
-                             'ticks': ""})
+                             'side': 'top',
+                             'tickvals': heatmap[0]['x'],
+                             'ticktext': [labels[i] for i in dendro_leaves]
+                             })
 
     # Edit xaxis2
     fig.update_layout(xaxis2={'domain': [0, .15],
@@ -145,7 +150,7 @@ def create_heatmap(df):
                               'showline': False,
                               'zeroline': False,
                               'showticklabels': False,
-                              'ticks': ""})
+                              })
 
     # Edit yaxis
     fig.update_layout(yaxis={'domain': [0, 1],
@@ -153,8 +158,10 @@ def create_heatmap(df):
                              'showgrid': False,
                              'showline': False,
                              'zeroline': False,
-                             'showticklabels': False,
-                             'ticks': ""})
+                             'side': 'right',
+                             'tickvals': heatmap[0]['y'],
+                             'ticktext': [labels[i] for i in dendro_leaves]
+                             })
 
     # Edit yaxis2
     fig.update_layout(yaxis2={'domain': [.825, .975],
@@ -162,12 +169,12 @@ def create_heatmap(df):
                               'showgrid': False,
                               'showline': False,
                               'zeroline': False,
-                              'showticklabels': False,
-                              'ticks': ""})
+                              'showticklabels': True,
+                              'ticks': "",
+                              })
 
     fig.update_layout(paper_bgcolor="rgba(0,0,0,0)",
-                      plot_bgcolor="rgba(0,0,0,0)",
-                      xaxis_tickfont=dict(color='rgba(0,0,0,0)'))
+                      plot_bgcolor="rgba(0,0,0,0)")
 
     return fig
 

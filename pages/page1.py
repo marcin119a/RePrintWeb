@@ -24,6 +24,7 @@ page1_layout = html.Div([
         dcc.Dropdown(
             id='dropdown-cancer',
             options=[
+                {'label': 'COSMIC_v1_SBS_GRCh37.txt', 'value': 'COSMIC_v1_SBS_GRCh37.txt'},
                 {'label': 'COSMIC_v2_SBS_GRCh37.txt', 'value': 'COSMIC_v2_SBS_GRCh37.txt'},
                 {'label': 'COSMIC_v3.1_SBS_GRCh37.txt', 'value': 'COSMIC_v3.1_SBS_GRCh37.txt'},
                 {'label': 'COSMIC_v3.4_SBS_GRCh37.txt', 'value': 'COSMIC_v3.4_SBS_GRCh37.txt'},
@@ -37,7 +38,6 @@ page1_layout = html.Div([
                 multi=True,
                 value=[k for k in data['COSMIC_v2_SBS_GRCh37.txt']],
             ),
-        html.H1("Visualization of Tri-nucleotide Context Mutations"),
         dcc.Graph(
             id='signature-plot'
         ),
@@ -46,8 +46,14 @@ page1_layout = html.Div([
         ),
     ]),
     dbc.Row([
-        dbc.Col(dcc.Graph(id='heatmap-plot')),
-        dbc.Col(dcc.Graph(id='heatmap-reprint-plot'))
+        dbc.Col([
+            html.H5("Signature similarity"),
+            dcc.Graph(id='heatmap-plot')
+        ]),
+        dbc.Col([
+            html.H5("RePrint similarity"),
+            dcc.Graph(id='heatmap-reprint-plot')
+        ])
     ]),
     dcc.Location(id='url-page1', refresh=False),
 

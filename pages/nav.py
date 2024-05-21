@@ -2,10 +2,10 @@ import dash_bootstrap_components as dbc
 
 navbar = dbc.NavbarSimple(
     children=[
-        dbc.NavItem(dbc.NavLink("Home page", href="/", id="nav-home")),
-        dbc.NavItem(dbc.NavLink("Upload your signatures", href="/page1.py", id="nav-page1.py")),
+        dbc.NavItem(dbc.NavLink("Start page", href="/", id="nav-home")),
+        dbc.NavItem(dbc.NavLink("Upload your signatures", href="/page1", id="nav-page1")),
     ],
-    brand="SigConfide analyzer",
+    brand="Reprint",
     brand_href="/",
     color="primary",
     dark=True,

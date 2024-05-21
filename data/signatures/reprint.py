@@ -1,7 +1,8 @@
 import numpy as np
 import pandas as pd
 
-data = pd.read_csv('COSMIC_v2_SBS_GRCh37.txt', sep='\t')
+name = 'COSMIC_v3_SBS_GRCh37.txt'
+data = pd.read_csv(name, sep='\t')
 
 
 # Extracting mutation categories and their probabilities
@@ -39,4 +40,4 @@ for signature in signatures:
 
 # Convert the reprint_probabilities dictionary to a DataFrame for better readability
 reprint_df = pd.DataFrame(reprint_probabilities)
-print(reprint_df.to_csv('COSMIC_v2_SBS_GRCh37_reprint.txt', sep='\t'))
+print(reprint_df.to_csv(f'{name}.reprint', sep='\t'))

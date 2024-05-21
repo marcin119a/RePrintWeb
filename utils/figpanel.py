@@ -2,9 +2,11 @@ import plotly.express as px
 import plotly.graph_objects as go
 
 
-def create_main_dashboard(frequencies, title):
+def create_main_dashboard(df, signature, title):
     import plotly.graph_objects as go
     import numpy as np
+
+    frequencies = df[signature]*100
 
     # Definiowanie kontekstów i grup mutacji
     mutations = ['C>A', 'C>G', 'C>T', 'T>A', 'T>C', 'T>G']
@@ -30,7 +32,7 @@ def create_main_dashboard(frequencies, title):
     # Dodawanie słupków dla każdej grupy mutacji
     for mutation in mutations:
         mutation_contexts = [c for c in contexts if f'[{mutation}]' in c]
-        mutation_frequencies = [frequencies[contexts.index(mc)] for mc in mutation_contexts]
+        mutation_frequencies = [frequencies[mc] for mc in mutation_contexts]
         fig.add_trace(go.Bar(
             x=mutation_contexts,
             y=mutation_frequencies,
@@ -39,7 +41,6 @@ def create_main_dashboard(frequencies, title):
         ))
 
     # Dodanie prostokątów i tekstu nad grupami
-    annotations = []
     for i, mutation in enumerate(mutations):
         # Obliczanie pozycji dla prostokątów
         x0 = i * 16 - 0.5

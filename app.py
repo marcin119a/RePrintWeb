@@ -29,21 +29,21 @@ def display_page(pathname):
 # Callback to set the active state
 @app.callback(
     [Output("nav-home", "active"),
-     Output("nav-page1", "active"),
-     Output("nav-page2", "active")],
+     Output("nav-page1", "active")
+    ],
     [Input("url", "pathname")]
 )
 def set_active_nav(pathname):
     # Check the current pathname and return True for the matching NavLink
     if pathname == "/":
-        return True, False, False, False
+        return True, False
     elif pathname == "/page1":
-        return False, True, False, False
+        return False, True
     elif pathname == "/page2":
-        return False, False, True, False
+        return False, False
 
     # Default case if no path matches
-    return False, False, False, False
+    return False, False, False
 
 
 if __name__ == '__main__':

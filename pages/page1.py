@@ -48,7 +48,9 @@ page1_layout = html.Div([
     dbc.Row([
         dbc.Col(dcc.Graph(id='heatmap-plot')),
         dbc.Col(dcc.Graph(id='heatmap-reprint-plot'))
-    ])
+    ]),
+    dcc.Location(id='url-page1', refresh=False),
+
     ])
 ])
 
@@ -73,11 +75,12 @@ def update_graph(selected_signatures, selected_file):
 
     df_reprint = pd.read_csv(f"data/signatures/{selected_file}.reprint",  sep='\t', index_col=0)[selected_signatures]
 
-    print(df_signatures.columns)
-    return (create_main_dashboard(df_signatures[selected_signatures[0]].to_numpy()*100,
-                                  title='Frequency of Specific Tri-nucleotide Context Mutations by Mutation Type'),
-            create_main_dashboard(df_reprint[selected_signatures[0]].to_numpy()*100,
-                                  title='Reprint - Frequency of Specific Tri-nucleotide Context Mutations by Mutation Type'),
+    return (create_main_dashboard(df_signatures,
+                                  signature=selected_signatures[0],
+                                  title=f'{selected_signatures[0]} Frequency of Specific Tri-nucleotide Context Mutations by Mutation Type'),
+            create_main_dashboard(df_reprint,
+                                  signature=selected_signatures[0],
+                                  title=f'{selected_signatures[0]} Reprint - Frequency of Specific Tri-nucleotide Context Mutations by Mutation Type'),
             create_heatmap(df_signatures),
             create_heatmap(df_reprint)
             )
@@ -89,3 +92,4 @@ def update_graph(selected_signatures, selected_file):
 )
 def set_options(selected_category):
     return [{'label': f"{i}", 'value': i} for i in data[selected_category]], [i for i in data[selected_category]]
+

@@ -179,6 +179,120 @@ def create_heatmap(df):
     return fig
 
 
+def create_heatmap_with_rmse(df):
+    import plotly.graph_objects as go
+    import plotly.figure_factory as ff
+    from scipy.spatial.distance import squareform
+    import numpy as np
+
+    def calculate_rmse(a, b):
+        return np.sqrt(np.mean((a - b) ** 2))
+
+    # Transponowanie danych i uzyskanie etykiet
+    df = df.T
+    labels = df.index.tolist()
+
+    # Obliczanie macierzy odległości RMSE
+    n = df.shape[0]
+    dist_matrix = np.zeros((n, n))
+    for i in range(n):
+        for j in range(i + 1, n):
+            rmse = calculate_rmse(df.iloc[i, :], df.iloc[j, :])
+            dist_matrix[i, j] = rmse
+            dist_matrix[j, i] = rmse
+
+    # Tworzenie dendrogramu dolnego
+    fig = ff.create_dendrogram(dist_matrix, labels=labels, orientation='bottom')
+    fig.for_each_trace(lambda trace: trace.update(visible=False))
+
+    for i in range(len(fig['data'])):
+        fig['data'][i]['yaxis'] = 'y2'
+    # Tworzenie dendrogramu bocznego
+    dendro_side = ff.create_dendrogram(dist_matrix, orientation='right')
+    for i in range(len(dendro_side['data'])):
+        dendro_side['data'][i]['xaxis'] = 'x2'
+
+    # Dodanie danych dendrogramu bocznego do figury
+    for data in dendro_side['data']:
+        fig.add_trace(data)
+
+    # Tworzenie heatmapy
+    dendro_leaves = dendro_side['layout']['yaxis']['ticktext']
+    dendro_leaves = list(map(int, dendro_leaves))
+    heat_data = dist_matrix[dendro_leaves, :]
+    heat_data = heat_data[:, dendro_leaves]
+
+    heatmap = [
+        go.Heatmap(
+            x=dendro_leaves,
+            y=dendro_leaves,
+            z=heat_data,
+            colorscale='Blues',
+            colorbar=dict(
+                x=1.2,
+                xpad=10
+            )
+        )
+    ]
+
+    heatmap[0]['x'] = fig['layout']['xaxis']['tickvals']
+    heatmap[0]['y'] = dendro_side['layout']['yaxis']['tickvals']
+
+    # Dodanie danych heatmapy do figury
+    for data in heatmap:
+        fig.add_trace(data)
+
+    # Edycja layoutu
+    fig.update_layout({'width': 700, 'height': 700,
+                       'showlegend': False, 'hovermode': 'closest',
+                       })
+
+    # Edycja xaxis
+    fig.update_layout(xaxis={'domain': [.15, 1],
+                             'mirror': False,
+                             'showgrid': False,
+                             'showline': False,
+                             'zeroline': False,
+                             'side': 'top',  # Ustawienie etykiet osi X na górze
+                             'tickvals': heatmap[0]['x'],
+                             'ticktext': [labels[i] for i in dendro_leaves]
+                             })
+
+    # Edycja xaxis2
+    fig.update_layout(xaxis2={'domain': [0, .15],
+                              'mirror': False,
+                              'showgrid': False,
+                              'showline': False,
+                              'zeroline': False,
+                              'showticklabels': False,
+                              })
+
+    # Edycja yaxis
+    fig.update_layout(yaxis={'domain': [0, 1],
+                             'mirror': False,
+                             'showgrid': False,
+                             'showline': False,
+                             'zeroline': False,
+                             'showticklabels': True,
+                             'tickvals': heatmap[0]['y'],
+                             'ticktext': [labels[i] for i in dendro_leaves],
+                             'side': 'right',
+                             })
+
+    # Edycja yaxis2
+    fig.update_layout(yaxis2={'domain': [.825, .975],
+                              'mirror': False,
+                              'showgrid': False,
+                              'showline': False,
+                              'zeroline': False,
+                              'showticklabels': True,  # Pokaż etykiety po prawej stronie
+                              'ticks': "",
+                              })
+
+    fig.update_layout(paper_bgcolor="rgba(0,0,0,0)",
+                      plot_bgcolor="rgba(0,0,0,0)")
+
+    return fig
 def create_empty_figure_with_text(text):
     fig = go.Figure()
     fig.update_layout(

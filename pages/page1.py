@@ -1,5 +1,5 @@
 from utils.utils import data
-from utils.figpanel import create_main_dashboard, create_heatmap
+from utils.figpanel import create_main_dashboard, create_heatmap_with_rmse
 from dash import dcc, html
 from main import app
 from dash import Input, Output
@@ -87,8 +87,8 @@ def update_graph(selected_signatures, selected_file):
             create_main_dashboard(df_reprint,
                                   signature=selected_signatures[0],
                                   title=f'{selected_signatures[0]} Reprint - Frequency of Specific Tri-nucleotide Context Mutations by Mutation Type'),
-            create_heatmap(df_signatures),
-            create_heatmap(df_reprint)
+            create_heatmap_with_rmse(df_signatures),
+            create_heatmap_with_rmse(df_reprint)
             )
 
 @app.callback(

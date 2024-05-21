@@ -14,7 +14,7 @@ distance_square_matrix = squareform(distance_matrix)
 linked = linkage(distance_matrix, 'ward')
 
 # Etykiety na potrzeby dendrogramu
-labels = data.index.tolist()
+labels = data.columns.tolist()
 
 # Tworzenie dendrogramów dla osi X i Y
 dendro = dendrogram(linked, labels=labels, no_plot=True)

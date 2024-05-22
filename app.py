@@ -18,7 +18,7 @@ app.layout = html.Div([
 def display_page(pathname):
     if pathname == '/':
         return page1_layout
-    elif pathname == '/page2':
+    elif pathname == '/page1':
         return page2_layout
 
 # Callback to set the active state

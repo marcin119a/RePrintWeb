@@ -181,9 +181,7 @@ from utils.utils import calculate_rmse
 from scipy.spatial.distance import squareform
 import numpy as np
 
-def create_heatmap_with_rmse(df, calc_func=calculate_rmse):
-
-
+def create_heatmap_with_rmse(df, calc_func=calculate_rmse, colorscale='Blues'):
     # Transponowanie danych i uzyskanie etykiet
     df = df.T
     labels = df.index.tolist()
@@ -223,7 +221,7 @@ def create_heatmap_with_rmse(df, calc_func=calculate_rmse):
             x=dendro_leaves,
             y=dendro_leaves,
             z=heat_data,
-            colorscale='Blues',
+            colorscale=colorscale,
             colorbar=dict(
                 x=1.2,
                 xpad=10

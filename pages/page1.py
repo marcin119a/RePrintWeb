@@ -34,7 +34,8 @@ page1_layout = html.Div([
                                     {'label': 'Cosine', 'value': 'cosine'},
                                     {'label': 'RMSE', 'value': 'rmse'}
                                 ],
-                                placeholder="Select distance metric"
+                                placeholder="Select distance metric",
+                                value='cosine',
                             ),
                         ])
                     ]),
@@ -46,14 +47,22 @@ page1_layout = html.Div([
                                 options=[
                                     {'label': 'Linkage Algorithm', 'value': 'linkage'}
                                 ],
-                                placeholder="Select clustering method"
+                                placeholder="Select clustering method",
+                                value='linkage',
                             ),
                         ])
                     ]),
                     dbc.Row([
                         dbc.Col([
                             dbc.Label("Epsilon", html_for="epsilon"),
-                            dbc.Input(type="number", id="epsilon", placeholder="Enter epsilon value", value=10e-4),
+                            dbc.Input(
+                                type="number",
+                                id="epsilon",
+                                placeholder="Enter epsilon value",
+                                value=10e-4,
+                                min=1e-10,  # Minimum value
+                                max=1e-2  # Maximum value
+                            ),
                         ])
                     ]),
                     dbc.Button("Submit", id="submit-button", className="mt-3", color="primary")
@@ -95,7 +104,7 @@ page1_layout = html.Div([
     ]),
     dcc.Location(id='url-page1', refresh=False),
 
-    ]),
+    ], fluid=True),
 
 ])
 
@@ -128,7 +137,7 @@ def update_output(n_clicks, selected_signatures, selected_file, distance_metric,
         df_reprint = reprint(df_signatures, epsilon=epsilon)
         return (f'Submitted: Distance Metric: {distance_metric}, Clustering Method: {clustering_method}, Epsilon: {epsilon}',
                 create_heatmap_with_rmse(df_signatures, calc_func=calculate_cosine),
-                create_heatmap_with_rmse(df_reprint, calc_func=calculate_cosine)
+                create_heatmap_with_rmse(df_reprint, calc_func=calculate_cosine, colorscale='Viridis')
                 )
     else:
         df_signatures = pd.read_csv(f"data/signatures/{selected_file}", sep='\t', index_col=0)[selected_signatures]
@@ -137,7 +146,7 @@ def update_output(n_clicks, selected_signatures, selected_file, distance_metric,
 
         return (f'Distance Metric: {distance_metric}, Clustering Method: {clustering_method}, Epsilon: {epsilon}',
                 create_heatmap_with_rmse(df_signatures),
-                create_heatmap_with_rmse(df_reprint)
+                create_heatmap_with_rmse(df_reprint, colorscale='Viridis')
                 )
 
 @app.callback(

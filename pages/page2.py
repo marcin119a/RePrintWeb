@@ -39,16 +39,14 @@ page2_layout = html.Div([
                 multi=True,
                 value=[k for k in data['COSMIC_v2_SBS_GRCh37.txt']],
             ),
-        dcc.Graph(
-            id='signature-plot-2'
-        ),
-        dcc.Graph(
-            id='reprint-plot-2'
-        ),
     ]),
     dcc.Location(id='url-page2', refresh=False),
-
-    ])
+    dcc.Loading(
+        id="loading-graphs",
+        type="default",
+        children=html.Div(id='plots-container-2')
+    )
+    ], fluid=True)
 ])
 
 
@@ -56,29 +54,42 @@ page2_layout = html.Div([
 import plotly.graph_objects as go
 
 @app.callback(
-    [Output('signature-plot-2', 'figure'),
-     Output('reprint-plot-2', 'figure'),
-     ],
+    Output('plots-container-2', 'children'),
     [Input('signatures-dropdown-2', 'value'),
      Input('dropdown-2', 'value')]
 )
 def update_graph(selected_signatures, selected_file):
-    if not selected_signatures:
-        return go.Figure()
+    if not selected_signatures or not selected_file:
+        return []
 
     df_signatures = pd.read_csv(f"data/signatures/{selected_file}", sep='\t', index_col=0)[selected_signatures]
-    print()
-    df_reprint = pd.read_csv(f"data/signatures/{selected_file}.reprint",  sep='\t', index_col=0)[selected_signatures]
+    df_reprint = pd.read_csv(f"data/signatures/{selected_file}.reprint", sep='\t', index_col=0)[selected_signatures]
 
-    return (create_main_dashboard(df_signatures,
-                                  signature=selected_signatures[0],
-                                  title=f'{selected_signatures[0]} Frequency of Specific Tri-nucleotide Context Mutations by Mutation Type'),
-            create_main_dashboard(df_reprint,
-                                  signature=selected_signatures[0],
-                                  title=f'{selected_signatures[0]} Reprint - Frequency of Specific Tri-nucleotide Context Mutations by Mutation Type'),
-            create_heatmap_with_rmse(df_signatures),
-            create_heatmap_with_rmse(df_reprint)
-            )
+    plots = []
+    for signature in selected_signatures:
+        plots.append(
+            dbc.Row([
+                dbc.Col(
+                    dcc.Graph(
+                        figure=create_main_dashboard(
+                            df_signatures,
+                            signature=signature,
+                            title=f'{signature} Frequency of Specific Tri-nucleotide Context Mutations by Mutation Type'
+                        )
+                    ), width=6
+                ),
+                dbc.Col(
+                    dcc.Graph(
+                        figure=create_main_dashboard(
+                            df_reprint,
+                            signature=signature,
+                            title=f'{signature} Reprint - Frequency of Specific Tri-nucleotide Context Mutations by Mutation Type'
+                        )
+                    ), width=6
+                )
+            ])
+        )
+    return plots
 
 @app.callback(
     [Output('signatures-dropdown-2', 'options'),

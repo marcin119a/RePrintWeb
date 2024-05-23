@@ -67,7 +67,7 @@ def update_graph(selected_signatures, selected_file):
         return go.Figure()
 
     df_signatures = pd.read_csv(f"data/signatures/{selected_file}", sep='\t', index_col=0)[selected_signatures]
-
+    print()
     df_reprint = pd.read_csv(f"data/signatures/{selected_file}.reprint",  sep='\t', index_col=0)[selected_signatures]
 
     return (create_main_dashboard(df_signatures,

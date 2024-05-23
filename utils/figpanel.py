@@ -1,6 +1,6 @@
 import plotly.express as px
 import plotly.graph_objects as go
-
+import plotly.figure_factory as ff
 
 def create_main_dashboard(df, signature, title):
     import plotly.graph_objects as go
@@ -77,11 +77,9 @@ def create_main_dashboard(df, signature, title):
 
     return fig
 
+from scipy.spatial.distance import pdist, squareform
 
 def create_heatmap(df):
-    import plotly.graph_objects as go
-    import plotly.figure_factory as ff
-    from scipy.spatial.distance import pdist, squareform
 
     df = df.T
     labels = df.index.tolist()
@@ -178,15 +176,13 @@ def create_heatmap(df):
 
     return fig
 
+from utils.utils import calculate_rmse
 
-def create_heatmap_with_rmse(df):
-    import plotly.graph_objects as go
-    import plotly.figure_factory as ff
-    from scipy.spatial.distance import squareform
-    import numpy as np
+from scipy.spatial.distance import squareform
+import numpy as np
 
-    def calculate_rmse(a, b):
-        return np.sqrt(np.mean((a - b) ** 2))
+def create_heatmap_with_rmse(df, calc_func=calculate_rmse):
+
 
     # Transponowanie danych i uzyskanie etykiet
     df = df.T
@@ -197,7 +193,7 @@ def create_heatmap_with_rmse(df):
     dist_matrix = np.zeros((n, n))
     for i in range(n):
         for j in range(i + 1, n):
-            rmse = calculate_rmse(df.iloc[i, :], df.iloc[j, :])
+            rmse = calc_func(df.iloc[i, :], df.iloc[j, :])
             dist_matrix[i, j] = rmse
             dist_matrix[j, i] = rmse
 

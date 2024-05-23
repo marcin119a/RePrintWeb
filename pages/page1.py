@@ -1,11 +1,11 @@
 from utils.utils import data
 from utils.figpanel import create_main_dashboard, create_heatmap_with_rmse
-from dash import dcc, html
 from main import app
-from dash import Input, Output
+from dash import dcc, html, Input, Output, State
 import dash_bootstrap_components as dbc
 from pages.nav import navbar
 import pandas as pd
+import plotly.graph_objects as go
 
 
 
@@ -20,6 +20,49 @@ data = {
 # Application layout
 page1_layout = html.Div([
     navbar,
+    dbc.Container([
+        dbc.Button("Hidden Options", id="toggle-button", className="mb-3"),
+        dbc.Collapse(
+            dbc.Card(dbc.CardBody([
+                dbc.Form([
+                    dbc.Row([
+                        dbc.Col([
+                            dbc.Label("Distance Metric", html_for="distance-metric"),
+                            dcc.Dropdown(
+                                id='distance-metric',
+                                options=[
+                                    {'label': 'Cosine', 'value': 'cosine'},
+                                    {'label': 'RMSE', 'value': 'rmse'}
+                                ],
+                                placeholder="Select distance metric"
+                            ),
+                        ])
+                    ]),
+                    dbc.Row([
+                        dbc.Col([
+                            dbc.Label("Clustering Method", html_for="clustering-method"),
+                            dcc.Dropdown(
+                                id='clustering-method',
+                                options=[
+                                    {'label': 'Linkage Algorithm', 'value': 'linkage'}
+                                ],
+                                placeholder="Select clustering method"
+                            ),
+                        ])
+                    ]),
+                    dbc.Row([
+                        dbc.Col([
+                            dbc.Label("Epsilon", html_for="epsilon"),
+                            dbc.Input(type="number", id="epsilon", placeholder="Enter epsilon value", value=10e-4),
+                        ])
+                    ]),
+                    dbc.Button("Submit", id="submit-button", className="mt-3", color="primary")
+                ])
+            ])),
+            id="collapse-form"
+        ),
+        html.Div(id='form-output')
+    ]),
     dbc.Container([
     dbc.Row([
         dcc.Dropdown(
@@ -38,13 +81,7 @@ page1_layout = html.Div([
                 options=[{'label': k, 'value': k} for k in data.keys()],
                 multi=True,
                 value=[k for k in data['COSMIC_v2_SBS_GRCh37.txt']],
-            ),
-        dcc.Graph(
-            id='signature-plot'
-        ),
-        dcc.Graph(
-            id='reprint-plot'
-        ),
+            )
     ]),
     dbc.Row([
         dbc.Col([
@@ -58,39 +95,50 @@ page1_layout = html.Div([
     ]),
     dcc.Location(id='url-page1', refresh=False),
 
-    ])
+    ]),
+
 ])
 
-
-
-import plotly.graph_objects as go
-
 @app.callback(
-    [Output('signature-plot', 'figure'),
-     Output('reprint-plot', 'figure'),
-     Output('heatmap-plot', 'figure'),
-     Output('heatmap-reprint-plot', 'figure')
-     ],
-    [Input('signatures-dropdown-cancer', 'value'),
-     Input('dropdown-cancer', 'value')]
+    Output("collapse-form", "is_open"),
+    [Input("toggle-button", "n_clicks")],
+    [State("collapse-form", "is_open")],
 )
-def update_graph(selected_signatures, selected_file):
-    if not selected_signatures:
-        return go.Figure()
+def toggle_collapse(n, is_open):
+    if n:
+        return not is_open
+    return is_open
 
-    df_signatures = pd.read_csv(f"data/signatures/{selected_file}", sep='\t', index_col=0)[selected_signatures]
+from utils.utils import reprint, calculate_rmse, calculate_cosine
+@app.callback(
+    [Output('form-output', 'children'),
+     Output('heatmap-plot', 'figure'),
+     Output('heatmap-reprint-plot', 'figure')],
+    [Input('submit-button', 'n_clicks'),
+     Input('signatures-dropdown-cancer', 'value'),
+     Input('dropdown-cancer', 'value')],
+    [State('distance-metric', 'value'),
+     State('clustering-method', 'value'),
+     State('epsilon', 'value')]
+)
+def update_output(n_clicks, selected_signatures, selected_file, distance_metric, clustering_method, epsilon):
+    if n_clicks:
+        df_signatures = pd.read_csv(f"data/signatures/{selected_file}", sep='\t', index_col=0)[selected_signatures]
 
-    df_reprint = pd.read_csv(f"data/signatures/{selected_file}.reprint",  sep='\t', index_col=0)[selected_signatures]
+        df_reprint = reprint(df_signatures, epsilon=epsilon)
+        return (f'Submitted: Distance Metric: {distance_metric}, Clustering Method: {clustering_method}, Epsilon: {epsilon}',
+                create_heatmap_with_rmse(df_signatures, calc_func=calculate_cosine),
+                create_heatmap_with_rmse(df_reprint, calc_func=calculate_cosine)
+                )
+    else:
+        df_signatures = pd.read_csv(f"data/signatures/{selected_file}", sep='\t', index_col=0)[selected_signatures]
 
-    return (create_main_dashboard(df_signatures,
-                                  signature=selected_signatures[0],
-                                  title=f'{selected_signatures[0]} Frequency of Specific Tri-nucleotide Context Mutations by Mutation Type'),
-            create_main_dashboard(df_reprint,
-                                  signature=selected_signatures[0],
-                                  title=f'{selected_signatures[0]} Reprint - Frequency of Specific Tri-nucleotide Context Mutations by Mutation Type'),
-            create_heatmap_with_rmse(df_signatures),
-            create_heatmap_with_rmse(df_reprint)
-            )
+        df_reprint = pd.read_csv(f"data/signatures/{selected_file}.reprint", sep='\t', index_col=0)[selected_signatures]
+
+        return (f'Distance Metric: {distance_metric}, Clustering Method: {clustering_method}, Epsilon: {epsilon}',
+                create_heatmap_with_rmse(df_signatures),
+                create_heatmap_with_rmse(df_reprint)
+                )
 
 @app.callback(
     [Output('signatures-dropdown-cancer', 'options'),

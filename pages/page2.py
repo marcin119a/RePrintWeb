@@ -1,5 +1,4 @@
-from utils.utils import data
-from utils.figpanel import create_main_dashboard, create_heatmap_with_rmse
+from utils.figpanel import create_main_dashboard
 from dash import dcc, html
 from main import app
 from dash import Input, Output

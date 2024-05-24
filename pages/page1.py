@@ -1,21 +1,27 @@
-from utils.utils import data
-from utils.figpanel import create_main_dashboard, create_heatmap_with_rmse
+from utils.figpanel import create_heatmap_with_rmse
 from main import app
 from dash import dcc, html, Input, Output, State
 import dash_bootstrap_components as dbc
 from pages.nav import navbar
 import pandas as pd
-import plotly.graph_objects as go
 
 
 
 
-data = {
-    'COSMIC_v1_SBS_GRCh37.txt': pd.read_csv('data/signatures/COSMIC_v1_SBS_GRCh37.txt', sep='\t').columns[1:].to_list(),
-    'COSMIC_v2_SBS_GRCh37.txt': pd.read_csv('data/signatures/COSMIC_v2_SBS_GRCh37.txt', sep='\t').columns[1:].to_list(),
-    'COSMIC_v3.1_SBS_GRCh37.txt': pd.read_csv('data/signatures/COSMIC_v3.1_SBS_GRCh37.txt', sep='\t').columns[1:].to_list(),
-    'COSMIC_v3.4_SBS_GRCh37.txt': pd.read_csv('data/signatures/COSMIC_v3.4_SBS_GRCh37.txt', sep='\t').columns[1:].to_list(),
-}
+files = [
+    'COSMIC_v1_SBS_GRCh37.txt', 'COSMIC_v2_SBS_GRCh37.txt', 'COSMIC_v3.1_SBS_GRCh37.txt',
+    'COSMIC_v3.2_SBS_GRCh37.txt', 'COSMIC_v3.3.1_SBS_GRCh37.txt', 'COSMIC_v3.4_SBS_GRCh37.txt', 'COSMIC_v3_SBS_GRCh37.txt',
+    'COSMIC_v1_SBS_GRCh38.txt', 'COSMIC_v2_SBS_GRCh38.txt', 'COSMIC_v3.1_SBS_GRCh38.txt',
+    'COSMIC_v3.2_SBS_GRCh38.txt', 'COSMIC_v3.3.1_SBS_GRCh38.txt', 'COSMIC_v3.4_SBS_GRCh38.txt', 'COSMIC_v3_SBS_GRCh38.txt'
+]
+
+data = {}
+
+for file in files:
+    data[file] = pd.read_csv(f'data/signatures/{file}', sep='\t').columns[1:].to_list()
+
+dropdown_options = [{'label': file, 'value': file} for file in files]
+
 
 # Application layout
 page1_layout = html.Div([
@@ -75,18 +81,13 @@ page1_layout = html.Div([
     dbc.Container([
     dbc.Row([
         dcc.Dropdown(
-            id='dropdown-cancer',
-            options=[
-                {'label': 'COSMIC_v1_SBS_GRCh37.txt', 'value': 'COSMIC_v1_SBS_GRCh37.txt'},
-                {'label': 'COSMIC_v2_SBS_GRCh37.txt', 'value': 'COSMIC_v2_SBS_GRCh37.txt'},
-                {'label': 'COSMIC_v3.1_SBS_GRCh37.txt', 'value': 'COSMIC_v3.1_SBS_GRCh37.txt'},
-                {'label': 'COSMIC_v3.4_SBS_GRCh37.txt', 'value': 'COSMIC_v3.4_SBS_GRCh37.txt'},
-            ],
+            id='dropdown-1',
+            options=dropdown_options,
             disabled=False,
-            value='COSMIC_v2_SBS_GRCh37.txt'
+            value=files[1]
         ),
         dcc.Dropdown(
-                id='signatures-dropdown-cancer',
+                id='signatures-dropdown-1',
                 options=[{'label': k, 'value': k} for k in data.keys()],
                 multi=True,
                 value=[k for k in data['COSMIC_v2_SBS_GRCh37.txt']],
@@ -125,8 +126,8 @@ from utils.utils import reprint, calculate_rmse, calculate_cosine
      Output('heatmap-plot', 'figure'),
      Output('heatmap-reprint-plot', 'figure')],
     [Input('submit-button', 'n_clicks'),
-     Input('signatures-dropdown-cancer', 'value'),
-     Input('dropdown-cancer', 'value')],
+     Input('signatures-dropdown-1', 'value'),
+     Input('dropdown-1', 'value')],
     [State('distance-metric', 'value'),
      State('clustering-method', 'value'),
      State('epsilon', 'value')]
@@ -151,9 +152,9 @@ def update_output(n_clicks, selected_signatures, selected_file, distance_metric,
                 )
 
 @app.callback(
-    [Output('signatures-dropdown-cancer', 'options'),
-     Output('signatures-dropdown-cancer', 'value')],
-    [Input('dropdown-cancer', 'value')]
+    [Output('signatures-dropdown-1', 'options'),
+     Output('signatures-dropdown-1', 'value')],
+    [Input('dropdown-1', 'value')]
 )
 def set_options(selected_category):
     return [{'label': f"{i}", 'value': i} for i in data[selected_category]], [i for i in data[selected_category]]
@@ -161,8 +162,8 @@ def set_options(selected_category):
 @app.callback(
     Output("download-dataframe-csv", "data"),
     Input("btn_csv", "n_clicks"),
-    [State('signatures-dropdown-cancer', 'value'),
-     State('dropdown-cancer', 'value'),
+    [State('signatures-dropdown-1', 'value'),
+     State('dropdown-1', 'value'),
      State('epsilon', 'value')],
     prevent_initial_call=True
 )

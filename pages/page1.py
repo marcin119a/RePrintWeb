@@ -21,7 +21,7 @@ data = {
 page1_layout = html.Div([
     navbar,
     dbc.Container([
-        dbc.Button("Hidden Options", id="toggle-button", className="mb-3"),
+        dbc.Button("Advanced Options", id="toggle-button", className="mb-3", color="dark"),
         dbc.Collapse(
             dbc.Card(dbc.CardBody([
                 dbc.Form([
@@ -35,7 +35,7 @@ page1_layout = html.Div([
                                     {'label': 'RMSE', 'value': 'rmse'}
                                 ],
                                 placeholder="Select distance metric",
-                                value='cosine',
+                                value='rmse',
                             ),
                         ])
                     ]),
@@ -71,7 +71,7 @@ page1_layout = html.Div([
             id="collapse-form"
         ),
         html.Div(id='form-output')
-    ]),
+    ], fluid=True),
     dbc.Container([
     dbc.Row([
         dcc.Dropdown(
@@ -103,7 +103,8 @@ page1_layout = html.Div([
         ])
     ]),
     dcc.Location(id='url-page1', refresh=False),
-
+    dbc.Button("Download TSV", id="btn_csv", className="mt-3", color="dark"),
+    dcc.Download(id="download-dataframe-csv")
     ], fluid=True),
 
 ])
@@ -142,7 +143,7 @@ def update_output(n_clicks, selected_signatures, selected_file, distance_metric,
     else:
         df_signatures = pd.read_csv(f"data/signatures/{selected_file}", sep='\t', index_col=0)[selected_signatures]
 
-        df_reprint = pd.read_csv(f"data/signatures/{selected_file}.reprint", sep='\t', index_col=0)[selected_signatures]
+        df_reprint = pd.read_csv(f"data/cosmic_reprints/{selected_file}.reprint", sep='\t', index_col=0)[selected_signatures]
 
         return (f'Distance Metric: {distance_metric}, Clustering Method: {clustering_method}, Epsilon: {epsilon}',
                 create_heatmap_with_rmse(df_signatures),
@@ -157,3 +158,15 @@ def update_output(n_clicks, selected_signatures, selected_file, distance_metric,
 def set_options(selected_category):
     return [{'label': f"{i}", 'value': i} for i in data[selected_category]], [i for i in data[selected_category]]
 
+@app.callback(
+    Output("download-dataframe-csv", "data"),
+    Input("btn_csv", "n_clicks"),
+    [State('signatures-dropdown-cancer', 'value'),
+     State('dropdown-cancer', 'value'),
+     State('epsilon', 'value')],
+    prevent_initial_call=True
+)
+def func(n_clicks, selected_signatures, selected_file, epsilon):
+    df_signatures = pd.read_csv(f"data/signatures/{selected_file}", sep='\t', index_col=0)[selected_signatures]
+    df_reprint = reprint(df_signatures, epsilon=epsilon)
+    return dcc.send_data_frame(df_reprint.to_csv, filename="data.csv")

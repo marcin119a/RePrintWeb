@@ -186,7 +186,6 @@ def create_heatmap_with_rmse(df, calc_func=calculate_rmse, colorscale='Blues'):
     df = df.T
     labels = df.index.tolist()
 
-    # Obliczanie macierzy odległości RMSE
     n = df.shape[0]
     dist_matrix = np.zeros((n, n))
     for i in range(n):

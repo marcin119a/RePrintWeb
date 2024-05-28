@@ -7,14 +7,20 @@ from pages.nav import navbar
 import pandas as pd
 
 
+files = [
+    'COSMIC_v1_SBS_GRCh37.txt', 'COSMIC_v2_SBS_GRCh37.txt', 'COSMIC_v3.1_SBS_GRCh37.txt',
+    'COSMIC_v3.2_SBS_GRCh37.txt', 'COSMIC_v3.3.1_SBS_GRCh37.txt', 'COSMIC_v3.4_SBS_GRCh37.txt', 'COSMIC_v3_SBS_GRCh37.txt',
+    'COSMIC_v1_SBS_GRCh38.txt', 'COSMIC_v2_SBS_GRCh38.txt', 'COSMIC_v3.1_SBS_GRCh38.txt',
+    'COSMIC_v3.2_SBS_GRCh38.txt', 'COSMIC_v3.3.1_SBS_GRCh38.txt', 'COSMIC_v3.4_SBS_GRCh38.txt', 'COSMIC_v3_SBS_GRCh38.txt'
+]
 
 
-data = {
-    'COSMIC_v1_SBS_GRCh37.txt': pd.read_csv('data/signatures/COSMIC_v1_SBS_GRCh37.txt', sep='\t').columns[1:].to_list(),
-    'COSMIC_v2_SBS_GRCh37.txt': pd.read_csv('data/signatures/COSMIC_v2_SBS_GRCh37.txt', sep='\t').columns[1:].to_list(),
-    'COSMIC_v3.1_SBS_GRCh37.txt': pd.read_csv('data/signatures/COSMIC_v3.1_SBS_GRCh37.txt', sep='\t').columns[1:].to_list(),
-    'COSMIC_v3.4_SBS_GRCh37.txt': pd.read_csv('data/signatures/COSMIC_v3.4_SBS_GRCh37.txt', sep='\t').columns[1:].to_list(),
-}
+data = {}
+
+for file in files:
+    data[file] = pd.read_csv(f'data/signatures/{file}', sep='\t').columns[1:].to_list()
+
+dropdown_options = [{'label': file, 'value': file} for file in files]
 
 # Application layout
 page2_layout = html.Div([
@@ -62,7 +68,7 @@ def update_graph(selected_signatures, selected_file):
         return []
 
     df_signatures = pd.read_csv(f"data/signatures/{selected_file}", sep='\t', index_col=0)[selected_signatures]
-    df_reprint = pd.read_csv(f"data/signatures/{selected_file}.reprint", sep='\t', index_col=0)[selected_signatures]
+    df_reprint = pd.read_csv(f"data/cosmic_reprints/{selected_file}.reprint", sep='\t', index_col=0)[selected_signatures]
 
     plots = []
     for signature in selected_signatures:

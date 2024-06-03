@@ -30,9 +30,11 @@ def create_main_dashboard(df, signature, title):
     fig = go.Figure()
 
     # Dodawanie słupków dla każdej grupy mutacji
+    global_labels = []
     for mutation in mutations:
         mutation_contexts = [c for c in contexts if f'[{mutation}]' in c]
         mutation_frequencies = [frequencies[mc] for mc in mutation_contexts]
+        global_labels.extend(mutation_contexts)
         fig.add_trace(go.Bar(
             x=mutation_contexts,
             y=mutation_frequencies,
@@ -55,7 +57,6 @@ def create_main_dashboard(df, signature, title):
                            font=dict(color='white', size=12))
 
     # Dodanie tytułów i formatowanie osi
-
     fig.update_layout(
         title=title,
         xaxis_title='Mutation Context',
@@ -66,17 +67,17 @@ def create_main_dashboard(df, signature, title):
         legend_title='Mutation Type',
         yaxis_range=[0, 120],
         xaxis=dict(
-            tickmode='linear',
-            dtick=1  # Ustawia etykiety co jeden kontekst
+            tickmode='array',
+            tickvals=[i for i in range(len(contexts))],
+            ticktext=[f"{x[0]}{x[2]}{x[6]}" for x in global_labels]
         ),
         yaxis=dict(
-            tickfont=dict(size=6)
+            tickfont=dict(size=5)
         )
     )
 
 
     return fig
-
 from scipy.spatial.distance import pdist, squareform
 
 def create_heatmap(df):

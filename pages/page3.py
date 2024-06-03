@@ -35,6 +35,11 @@ page3_layout = html.Div([
                 placeholder="Select signature files"
             ),
         ]),
+        dcc.Dropdown(
+            id='signatures-dropdown-3',
+            multi=True,
+            placeholder="Select signatures"
+        ),
         dbc.Row([
             dbc.Col([
                 html.H5("Signature similarity"),
@@ -51,14 +56,35 @@ page3_layout = html.Div([
     ], fluid=True),
 ])
 from utils.utils import reprint
+
 @app.callback(
-    [Output('heatmap-plot-3', 'figure'), Output('heatmap-reprint-plot-3', 'figure')],
+    [Output('signatures-dropdown-3', 'options'),
+     Output('signatures-dropdown-3', 'value')],
     [Input('dropdown-3', 'value')]
 )
-def update_output(selected_files):
+def update_signature_dropdown(selected_files):
     if selected_files:
-        combined_df = pd.concat([pd.read_csv(f"data/signatures/{file}", sep='\t', index_col=0) for file in selected_files], axis=1)
-        combined_reprint = reprint(combined_df)  # Assuming 'reprint' function can handle concatenated DataFrames
+        common_signatures = set(data[selected_files[0]])
+        for file in selected_files[1:]:
+            common_signatures.update(data[file])
+
+        options = [{'label': sig, 'value': sig} for sig in common_signatures]
+        return options, list(common_signatures)
+    return [], []
+
+
+@app.callback(
+    [Output('heatmap-plot-3', 'figure'),
+     Output('heatmap-reprint-plot-3', 'figure')],
+    [Input('dropdown-3', 'value'),
+     Input('signatures-dropdown-3', 'value')]
+)
+def update_output(selected_files, selected_signatures):
+    if selected_files and selected_signatures:
+        combined_df = pd.concat([pd.read_csv(f"data/signatures/{file}", sep='\t', index_col=0)
+                                 for file in selected_files], axis=1)[selected_signatures]
+        combined_reprint = reprint(combined_df)
+
         return (
             create_heatmap_with_rmse(combined_df),
             create_heatmap_with_rmse(combined_reprint, colorscale='Viridis')

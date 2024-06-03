@@ -6,7 +6,7 @@ def calculate_rmse(x, y):
     return np.sqrt(np.nanmean((x - y) ** 2))
 
 def calculate_cosine(x, y):
-    return -np.dot(x, y) / (np.sqrt(np.dot(x, x)) * np.sqrt(np.dot(y, y)))
+    return 1-np.dot(x, y) / (np.sqrt(np.dot(x, x)) * np.sqrt(np.dot(y, y)))
 
 def reprint(data, epsilon=10e-4):
     # Extracting mutation categories and their probabilities

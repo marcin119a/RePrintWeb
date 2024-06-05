@@ -11,7 +11,7 @@ def calculate_cosine(x, y):
 def reprint(data, epsilon=10e-4):
     # Extracting mutation categories and their probabilities
     mutation_types = data.index
-    signatures = data.columns[1:]
+    signatures = data.columns[0:]
 
     # Initialize a dictionary to store the RePrint probabilities for each signature
     reprint_probabilities = {signature: {} for signature in signatures}

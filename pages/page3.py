@@ -11,7 +11,7 @@ files = [
     'COSMIC_v3.2_SBS_GRCh37.txt', 'COSMIC_v3.3.1_SBS_GRCh37.txt', 'COSMIC_v3.4_SBS_GRCh37.txt',
     'COSMIC_v3_SBS_GRCh37.txt', 'COSMIC_v1_SBS_GRCh38.txt', 'COSMIC_v2_SBS_GRCh38.txt',
     'COSMIC_v3.1_SBS_GRCh38.txt', 'COSMIC_v3.2_SBS_GRCh38.txt', 'COSMIC_v3.3.1_SBS_GRCh38.txt',
-    'COSMIC_v3.4_SBS_GRCh38.txt', 'COSMIC_v3_SBS_GRCh38.txt', 'Zou2018-signatures.SBS-96.tsv'
+    'COSMIC_v3.4_SBS_GRCh38.txt', 'COSMIC_v3_SBS_GRCh38.txt', 'Zou2018-signatures.SBS-96.tsv', 'Kucab2019-sub_signature.txt'
 ]
 
 # Load data from files
@@ -83,6 +83,7 @@ def update_output(selected_files, selected_signatures):
     if selected_files and selected_signatures:
         combined_df = pd.concat([pd.read_csv(f"data/signatures/{file}", sep='\t', index_col=0)
                                  for file in selected_files], axis=1)[selected_signatures]
+        print(combined_df.to_csv('test.csv'))
         combined_reprint = reprint(combined_df)
 
         return (

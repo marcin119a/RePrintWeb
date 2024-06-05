@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 
-name = 'COSMIC_v3_SBS_GRCh38.txt'
+name = 'Kucab2019-sub_signature.txt'
 data = pd.read_csv(f'signatures/{name}', sep='\t')
 
 

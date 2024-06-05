@@ -26,6 +26,56 @@ dropdown_options = [{'label': file, 'value': file} for file in files]
 page3_layout = html.Div([
     navbar,
     dbc.Container([
+        dbc.Button("Advanced Options", id="toggle-button", className="mb-3", color="dark"),
+        dbc.Collapse(
+            dbc.Card(dbc.CardBody([
+                dbc.Form([
+                    dbc.Row([
+                        dbc.Col([
+                            dbc.Label("Distance Metric", html_for="distance-metric"),
+                            dcc.Dropdown(
+                                id='distance-metric-3',
+                                options=[
+                                    {'label': 'Cosine', 'value': 'cosine'},
+                                    {'label': 'RMSE', 'value': 'rmse'}
+                                ],
+                                placeholder="Select distance metric",
+                                value='rmse',
+                            ),
+                        ])
+                    ]),
+                    dbc.Row([
+                        dbc.Col([
+                            dbc.Label("Clustering Method", html_for="clustering-method"),
+                            dcc.Dropdown(
+                                id='clustering-method-3',
+                                options=[
+                                    {'label': 'Linkage Algorithm', 'value': 'linkage'}
+                                ],
+                                placeholder="Select clustering method",
+                                value='linkage',
+                            ),
+                        ])
+                    ]),
+                    dbc.Row([
+                        dbc.Col([
+                            dbc.Label("Epsilon", html_for="epsilon"),
+                            dbc.Input(
+                                type="number",
+                                id="epsilon-3",
+                                placeholder="Enter epsilon value",
+                                value=10e-4,
+                                min=1e-10,  # Minimum value
+                                max=1e-2  # Maximum value
+                            ),
+                        ])
+                    ]),
+                    dbc.Button("Submit", id="submit-button-3", className="mt-3", color="primary")
+                ])
+            ])),
+            id="collapse-form"
+        ),
+        html.Div(id='form-output-3'),
         dbc.Row([
             dcc.Dropdown(
                 id='dropdown-3',
@@ -72,25 +122,33 @@ def update_signature_dropdown(selected_files):
         return options, list(common_signatures)
     return [], []
 
+from utils.utils import reprint, calculate_rmse, calculate_cosine
 
 @app.callback(
-    [Output('heatmap-plot-3', 'figure'),
+    [Output('form-output-3', 'children'),
+     Output('heatmap-plot-3', 'figure'),
      Output('heatmap-reprint-plot-3', 'figure')],
-    [Input('dropdown-3', 'value'),
-     Input('signatures-dropdown-3', 'value')]
+    [Input('submit-button-3', 'n_clicks'),
+     Input('dropdown-3', 'value'),
+     Input('signatures-dropdown-3', 'value'),
+     ],
+    [State('distance-metric-3', 'value'),
+     State('clustering-method-3', 'value'),
+     State('epsilon-3', 'value')]
 )
-def update_output(selected_files, selected_signatures):
+def update_output(n_clicks, selected_files, selected_signatures, distance_metric, clustering_method, epsilon):
     if selected_files and selected_signatures:
         combined_df = pd.concat([pd.read_csv(f"data/signatures/{file}", sep='\t', index_col=0)
                                  for file in selected_files], axis=1)[selected_signatures]
-        print(combined_df.to_csv('test.csv'))
-        combined_reprint = reprint(combined_df)
+        functions = {'rmse': calculate_rmse, 'cosine': calculate_cosine}
+        combined_reprint = reprint(combined_df, epsilon)
 
         return (
-            create_heatmap_with_rmse(combined_df),
-            create_heatmap_with_rmse(combined_reprint, colorscale='Viridis')
+            f'Submitted: Distance Metric: {distance_metric}, Clustering Method: {clustering_method}, Epsilon: {epsilon}',
+            create_heatmap_with_rmse(combined_df, calc_func=functions[distance_metric]),
+            create_heatmap_with_rmse(combined_reprint, calc_func=functions[distance_metric], colorscale='Viridis')
         )
-    return {}, {}
+    return '', {}, {}
 
 @app.callback(
     Output("download-dataframe-csv-3", "data"),

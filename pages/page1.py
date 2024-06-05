@@ -135,11 +135,11 @@ from utils.utils import reprint, calculate_rmse, calculate_cosine
 def update_output(n_clicks, selected_signatures, selected_file, distance_metric, clustering_method, epsilon):
     if n_clicks:
         df_signatures = pd.read_csv(f"data/signatures/{selected_file}", sep='\t', index_col=0)[selected_signatures]
-
+        functions = {'rmse': calculate_rmse, 'cosine': calculate_cosine}
         df_reprint = reprint(df_signatures, epsilon=epsilon)
         return (f'Submitted: Distance Metric: {distance_metric}, Clustering Method: {clustering_method}, Epsilon: {epsilon}',
-                create_heatmap_with_rmse(df_signatures, calc_func=calculate_cosine),
-                create_heatmap_with_rmse(df_reprint, calc_func=calculate_cosine, colorscale='Viridis')
+                create_heatmap_with_rmse(df_signatures, calc_func=functions[clustering_method]),
+                create_heatmap_with_rmse(df_reprint, calc_func=functions[clustering_method], colorscale='Viridis')
                 )
     else:
         df_signatures = pd.read_csv(f"data/signatures/{selected_file}", sep='\t', index_col=0)[selected_signatures]

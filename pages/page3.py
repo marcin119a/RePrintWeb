@@ -145,8 +145,8 @@ def update_output(n_clicks, selected_files, selected_signatures, distance_metric
 
         return (
             f'Submitted: Distance Metric: {distance_metric}, Clustering Method: {clustering_method}, Epsilon: {epsilon}',
-            create_heatmap_with_rmse(combined_df, calc_func=functions[distance_metric]),
-            create_heatmap_with_rmse(combined_reprint, calc_func=functions[distance_metric], colorscale='Viridis')
+            create_heatmap_with_rmse(combined_df, calc_func=functions[distance_metric], colorscale='BuPu'),
+            create_heatmap_with_rmse(combined_reprint, calc_func=functions[distance_metric],  colorscale='Blues')
         )
     return '', {}, {}
 

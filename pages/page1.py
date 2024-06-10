@@ -138,8 +138,8 @@ def update_output(n_clicks, selected_signatures, selected_file, distance_metric,
         functions = {'rmse': calculate_rmse, 'cosine': calculate_cosine}
         df_reprint = reprint(df_signatures, epsilon=epsilon)
         return (f'Submitted: Distance Metric: {distance_metric}, Clustering Method: {clustering_method}, Epsilon: {epsilon}',
-                create_heatmap_with_rmse(df_signatures, calc_func=functions[clustering_method]),
-                create_heatmap_with_rmse(df_reprint, calc_func=functions[clustering_method], colorscale='Viridis')
+                create_heatmap_with_rmse(df_signatures, calc_func=functions[distance_metric], colorscale='BuPu'),
+                create_heatmap_with_rmse(df_reprint, calc_func=functions[distance_metric], colorscale='Blues')
                 )
     else:
         df_signatures = pd.read_csv(f"data/signatures/{selected_file}", sep='\t', index_col=0)[selected_signatures]
@@ -147,8 +147,8 @@ def update_output(n_clicks, selected_signatures, selected_file, distance_metric,
         df_reprint = pd.read_csv(f"data/cosmic_reprints/{selected_file}.reprint", sep='\t', index_col=0)[selected_signatures]
 
         return (f'Distance Metric: {distance_metric}, Clustering Method: {clustering_method}, Epsilon: {epsilon}',
-                create_heatmap_with_rmse(df_signatures),
-                create_heatmap_with_rmse(df_reprint, colorscale='Viridis')
+                create_heatmap_with_rmse(df_signatures, colorscale='BuPu'),
+                create_heatmap_with_rmse(df_reprint, colorscale='Blues')
                 )
 
 @app.callback(

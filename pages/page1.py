@@ -6,8 +6,6 @@ from pages.nav import navbar
 import pandas as pd
 
 
-
-
 files = [
     'COSMIC_v1_SBS_GRCh37.txt', 'COSMIC_v2_SBS_GRCh37.txt', 'COSMIC_v3.1_SBS_GRCh37.txt',
     'COSMIC_v3.2_SBS_GRCh37.txt', 'COSMIC_v3.3.1_SBS_GRCh37.txt', 'COSMIC_v3.4_SBS_GRCh37.txt', 'COSMIC_v3_SBS_GRCh37.txt',
@@ -84,7 +82,7 @@ page1_layout = html.Div([
             id='dropdown-1',
             options=dropdown_options,
             disabled=False,
-            value=files[1]
+            value=''
         ),
         dcc.Dropdown(
                 id='signatures-dropdown-1',
@@ -93,6 +91,23 @@ page1_layout = html.Div([
                 value=[k for k in data['COSMIC_v2_SBS_GRCh37.txt']],
             )
     ]),
+    dcc.Upload(
+            id='upload-data-3-signatures',
+            children=html.Div(['Drag and drop your signatures']),
+            style={
+                'width': '300px',
+                'height': '60px',
+                'lineHeight': '60px',
+                'borderWidth': '1px',
+                'borderStyle': 'dashed',
+                'borderRadius': '5px',
+                'textAlign': 'center',
+                'margin': '10px'
+            },
+            multiple=False
+        ),
+    html.Div(id='info_uploader'),
+    dcc.Store(id='session-3-signatures', storage_type='session', data=None),
     dbc.Row([
         dbc.Col([
             html.H5("Signature similarity"),
@@ -109,6 +124,23 @@ page1_layout = html.Div([
     ], fluid=True),
 
 ])
+
+from utils.utils import parse_signatures
+import dash
+
+@app.callback(
+    [Output('session-3-signatures', 'data')],
+    [Input('upload-data-3-signatures', 'contents')],
+    [State('upload-data-3-signatures', 'filename')]
+)
+def update_output_signatures(contents, filename):
+    if contents is not None:
+        df_signatures = parse_signatures(contents, filename)
+
+        signatures_info = "Some information extracted from df_signatures"
+        return [{'signatures_data': df_signatures.to_dict('records'), 'filename': filename, 'info': signatures_info}]
+    else:
+        return dash.no_update
 
 @app.callback(
     Output("collapse-form", "is_open"),
@@ -130,34 +162,72 @@ from utils.utils import reprint, calculate_rmse, calculate_cosine
      Input('dropdown-1', 'value')],
     [State('distance-metric', 'value'),
      State('clustering-method', 'value'),
-     State('epsilon', 'value')]
+     State('epsilon', 'value'),
+     State('session-3-signatures', 'data'),
+     ]
 )
-def update_output(n_clicks, selected_signatures, selected_file, distance_metric, clustering_method, epsilon):
+def update_output(n_clicks, selected_signatures, selected_file, distance_metric, clustering_method, epsilon, signatures):
     if n_clicks:
-        df_signatures = pd.read_csv(f"data/signatures/{selected_file}", sep='\t', index_col=0)[selected_signatures]
-        functions = {'rmse': calculate_rmse, 'cosine': calculate_cosine}
-        df_reprint = reprint(df_signatures, epsilon=epsilon)
-        return (f'Submitted: Distance Metric: {distance_metric}, Clustering Method: {clustering_method}, Epsilon: {epsilon}',
-                create_heatmap_with_rmse(df_signatures, calc_func=functions[distance_metric], colorscale='BuPu'),
-                create_heatmap_with_rmse(df_reprint, calc_func=functions[distance_metric], colorscale='Blues')
-                )
+        if signatures is not None:
+            data = pd.DataFrame(signatures['signatures_data'])
+            data.index = data['Type']
+            data = data.drop(columns='Type')[selected_signatures]
+            functions = {'rmse': calculate_rmse, 'cosine': calculate_cosine}
+            df_reprint = reprint(data, epsilon=epsilon)
+            return (f'Submitted: Distance Metric: {distance_metric}, Clustering Method: {clustering_method}, Epsilon: {epsilon}',
+                    create_heatmap_with_rmse(data, calc_func=functions[distance_metric], colorscale='BuPu'),
+                    create_heatmap_with_rmse(df_reprint, calc_func=functions[distance_metric], colorscale='Blues')
+                    )
+        else:
+            df_signatures = pd.read_csv(f"data/signatures/{selected_file}", sep='\t', index_col=0)[selected_signatures]
+            functions = {'rmse': calculate_rmse, 'cosine': calculate_cosine}
+            df_reprint = reprint(df_signatures, epsilon=epsilon)
+            return (f'Submitted: Distance Metric: {distance_metric}, Clustering Method: {clustering_method}, Epsilon: {epsilon}',
+                    create_heatmap_with_rmse(df_signatures, calc_func=functions[distance_metric], colorscale='BuPu'),
+                    create_heatmap_with_rmse(df_reprint, calc_func=functions[distance_metric], colorscale='Blues')
+                    )
     else:
-        df_signatures = pd.read_csv(f"data/signatures/{selected_file}", sep='\t', index_col=0)[selected_signatures]
+        if signatures is not None:
+            data = pd.DataFrame(signatures['signatures_data'])
+            data.index = data['Type']
+            data = data.drop(columns='Type')[selected_signatures]
+            functions = {'rmse': calculate_rmse, 'cosine': calculate_cosine}
+            df_reprint = reprint(data, epsilon=epsilon)
+            return (f'Submitted: Distance Metric: {distance_metric}, Clustering Method: {clustering_method}, Epsilon: {epsilon}',
+                    create_heatmap_with_rmse(data, calc_func=functions[distance_metric], colorscale='BuPu'),
+                    create_heatmap_with_rmse(df_reprint, calc_func=functions[distance_metric], colorscale='Blues')
+                    )
+        else:
+            df_signatures = pd.read_csv(f"data/signatures/{selected_file}", sep='\t', index_col=0)[selected_signatures]
+            df_reprint = pd.read_csv(f"data/cosmic_reprints/{selected_file}.reprint", sep='\t', index_col=0)[selected_signatures]
 
-        df_reprint = pd.read_csv(f"data/cosmic_reprints/{selected_file}.reprint", sep='\t', index_col=0)[selected_signatures]
-
-        return (f'Distance Metric: {distance_metric}, Clustering Method: {clustering_method}, Epsilon: {epsilon}',
-                create_heatmap_with_rmse(df_signatures, colorscale='BuPu'),
-                create_heatmap_with_rmse(df_reprint, colorscale='Blues')
-                )
+            return (f'Distance Metric: {distance_metric}, Clustering Method: {clustering_method}, Epsilon: {epsilon}',
+                    create_heatmap_with_rmse(df_signatures, colorscale='BuPu'),
+                    create_heatmap_with_rmse(df_reprint, colorscale='Blues')
+                    )
 
 @app.callback(
     [Output('signatures-dropdown-1', 'options'),
-     Output('signatures-dropdown-1', 'value')],
-    [Input('dropdown-1', 'value')]
+     Output('signatures-dropdown-1', 'value'),
+     Output('dropdown-1', 'style'),
+     Output('info_uploader', 'children')
+     ],
+    [Input('dropdown-1', 'value'),
+     Input('session-3-signatures', 'data')]
 )
-def set_options(selected_category):
-    return [{'label': f"{i}", 'value': i} for i in data[selected_category]], [i for i in data[selected_category]]
+def set_options(selected_category, contents):
+    if contents is not None:
+        df = pd.DataFrame(contents['signatures_data'])
+        df.index = df['Type']
+        df = df.drop(columns='Type')
+        signatures = df.columns.to_list()
+        return ([{'label': signature, 'value': signature} for signature in signatures], signatures, {'display': 'None'},
+                f'Added your signatures {contents["filename"]}')
+
+    return ([{'label': f"{i}", 'value': i} for i in data[selected_category]], [i for i in data[selected_category]], {'display': 'block'},
+            'Not Uploaded')
+
+
 
 @app.callback(
     Output("download-dataframe-csv", "data"),

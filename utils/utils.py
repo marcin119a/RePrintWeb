@@ -47,3 +47,14 @@ def reprint(data, epsilon=10e-4):
     # Convert the reprint_probabilities dictionary to a DataFrame for better readability
     reprint_df = pd.DataFrame(reprint_probabilities)
     return reprint_df
+
+import base64
+import io
+def parse_signatures(contents, filename):
+    content_type, content_string = contents.split(',')
+
+    decoded = base64.b64decode(content_string)
+    if 'txt' in filename:
+        return pd.read_csv(io.StringIO(decoded.decode('utf-8')), sep='\t')
+    if 'csv' in filename:
+        return pd.read_csv(io.StringIO(decoded.decode('utf-8')), index_col=[0, 1], sep=',')

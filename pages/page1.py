@@ -82,7 +82,7 @@ page1_layout = html.Div([
             id='dropdown-1',
             options=dropdown_options,
             disabled=False,
-            value=''
+            value=files[0]
         ),
         dcc.Dropdown(
                 id='signatures-dropdown-1',
@@ -92,7 +92,7 @@ page1_layout = html.Div([
             )
     ]),
     dcc.Upload(
-            id='upload-data-3-signatures',
+            id='upload-data-1-signatures',
             children=html.Div(['Drag and drop your signatures']),
             style={
                 'width': '300px',
@@ -107,7 +107,7 @@ page1_layout = html.Div([
             multiple=False
         ),
     html.Div(id='info_uploader'),
-    dcc.Store(id='session-3-signatures', storage_type='session', data=None),
+    dcc.Store(id='session-1-signatures', storage_type='session', data=None),
     dbc.Row([
         dbc.Col([
             html.H5("Signature similarity"),
@@ -129,9 +129,9 @@ from utils.utils import parse_signatures
 import dash
 
 @app.callback(
-    [Output('session-3-signatures', 'data')],
-    [Input('upload-data-3-signatures', 'contents')],
-    [State('upload-data-3-signatures', 'filename')]
+    [Output('session-1-signatures', 'data')],
+    [Input('upload-data-1-signatures', 'contents')],
+    [State('upload-data-1-signatures', 'filename')]
 )
 def update_output_signatures(contents, filename):
     if contents is not None:
@@ -163,7 +163,7 @@ from utils.utils import reprint, calculate_rmse, calculate_cosine
     [State('distance-metric', 'value'),
      State('clustering-method', 'value'),
      State('epsilon', 'value'),
-     State('session-3-signatures', 'data'),
+     State('session-1-signatures', 'data'),
      ]
 )
 def update_output(n_clicks, selected_signatures, selected_file, distance_metric, clustering_method, epsilon, signatures):
@@ -213,7 +213,7 @@ def update_output(n_clicks, selected_signatures, selected_file, distance_metric,
      Output('info_uploader', 'children')
      ],
     [Input('dropdown-1', 'value'),
-     Input('session-3-signatures', 'data')]
+     Input('session-1-signatures', 'data')]
 )
 def set_options(selected_category, contents):
     if contents is not None:
@@ -221,10 +221,15 @@ def set_options(selected_category, contents):
         df.index = df['Type']
         df = df.drop(columns='Type')
         signatures = df.columns.to_list()
-        return ([{'label': signature, 'value': signature} for signature in signatures], signatures, {'display': 'None'},
-                f'Added your signatures {contents["filename"]}')
+        return (
+            [{'label': signature, 'value': signature} for signature in signatures],
+            signatures,
+            {'display': 'None'},
+            f'Added your signatures {contents["filename"]}')
 
-    return ([{'label': f"{i}", 'value': i} for i in data[selected_category]], [i for i in data[selected_category]], {'display': 'block'},
+    return ([{'label': f"{i}", 'value': i} for i in data[selected_category]],
+            [i for i in data[selected_category]],
+            {'display': 'block'},
             'Not Uploaded')
 
 
@@ -235,7 +240,7 @@ def set_options(selected_category, contents):
     [State('signatures-dropdown-1', 'value'),
      State('dropdown-1', 'value'),
      State('epsilon', 'value'),
-     State('session-3-signatures', 'data')],
+     State('session-1-signatures', 'data')],
     prevent_initial_call=True
 )
 def func(n_clicks, selected_signatures, selected_file, epsilon, contents):

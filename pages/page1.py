@@ -234,10 +234,19 @@ def set_options(selected_category, contents):
     Input("btn_csv", "n_clicks"),
     [State('signatures-dropdown-1', 'value'),
      State('dropdown-1', 'value'),
-     State('epsilon', 'value')],
+     State('epsilon', 'value'),
+     State('session-3-signatures', 'data')],
     prevent_initial_call=True
 )
-def func(n_clicks, selected_signatures, selected_file, epsilon):
-    df_signatures = pd.read_csv(f"data/signatures/{selected_file}", sep='\t', index_col=0)[selected_signatures]
-    df_reprint = reprint(df_signatures, epsilon=epsilon)
-    return dcc.send_data_frame(df_reprint.to_csv, filename="data.csv")
+def func(n_clicks, selected_signatures, selected_file, epsilon, contents):
+    if contents is not None:
+        df_signatures = pd.DataFrame(contents['signatures_data'])
+        df_signatures.index = df_signatures['Type']
+        df_signatures = df_signatures.drop(columns='Type')[selected_signatures]
+        df_reprint = reprint(df_signatures, epsilon=epsilon)
+        return dcc.send_data_frame(df_reprint.to_csv, filename="data.csv")
+    else:
+        df_signatures = pd.read_csv(f"data/signatures/{selected_file}", sep='\t', index_col=0)[selected_signatures]
+        df_reprint = reprint(df_signatures, epsilon=epsilon)
+        return dcc.send_data_frame(df_reprint.to_csv, filename="data.csv")
+

@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 
-name = 'Kucab2019-sub_signature.txt'
+name = 'transcribed.normalized.txt'
 data = pd.read_csv(f'signatures/{name}', sep='\t')
 
 

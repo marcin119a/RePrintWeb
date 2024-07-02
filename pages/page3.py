@@ -11,7 +11,8 @@ files = [
     'COSMIC_v3.2_SBS_GRCh37.txt', 'COSMIC_v3.3.1_SBS_GRCh37.txt', 'COSMIC_v3.4_SBS_GRCh37.txt',
     'COSMIC_v3_SBS_GRCh37.txt', 'COSMIC_v1_SBS_GRCh38.txt', 'COSMIC_v2_SBS_GRCh38.txt',
     'COSMIC_v3.1_SBS_GRCh38.txt', 'COSMIC_v3.2_SBS_GRCh38.txt', 'COSMIC_v3.3.1_SBS_GRCh38.txt',
-    'COSMIC_v3.4_SBS_GRCh38.txt', 'COSMIC_v3_SBS_GRCh38.txt', 'Zou2018-signatures.SBS-96.tsv', 'Kucab2019-sub_signature.txt'
+    'COSMIC_v3.4_SBS_GRCh38.txt', 'COSMIC_v3_SBS_GRCh38.txt', 'Zou2018-signatures.SBS-96.tsv',
+    'Kucab2019-sub_signature.txt', 'transcribed.txt', 'untranscribed.txt'
 ]
 
 # Load data from files

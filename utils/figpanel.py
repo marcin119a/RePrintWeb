@@ -2,11 +2,11 @@ import plotly.express as px
 import plotly.graph_objects as go
 import plotly.figure_factory as ff
 
-def create_main_dashboard(df, signature, title):
+def create_main_dashboard(df, signature, title, yaxis_title):
     import plotly.graph_objects as go
     import numpy as np
 
-    frequencies = df[signature]*100
+    frequencies = df[signature]*1
 
     # Definiowanie kontekstów i grup mutacji
     mutations = ['C>A', 'C>G', 'C>T', 'T>A', 'T>C', 'T>G']
@@ -49,10 +49,10 @@ def create_main_dashboard(df, signature, title):
         x1 = x0 + 16
         # Dodanie prostokąta
         fig.add_shape(type="rect",
-                      x0=x0, y0=105, x1=x1, y1=115,
+                      x0=x0, y0=5, x1=x1, y1=15,
                       fillcolor=colors[mutation], opacity=0.5, line=dict(color=colors[mutation]))
         # Dodanie tekstu
-        fig.add_annotation(x=(x0 + x1) / 2, y=110,
+        fig.add_annotation(x=(x0 + x1) / 2, y=10,
                            text=mutation, showarrow=False,
                            font=dict(color='white', size=12))
 
@@ -60,12 +60,12 @@ def create_main_dashboard(df, signature, title):
     fig.update_layout(
         title=title,
         xaxis_title='Mutation Context',
-        yaxis_title='Frequency (%)',
+        yaxis_title=yaxis_title,
         xaxis_tickangle=-45,
         template='plotly_white',
         barmode='group',
         legend_title='Mutation Type',
-        yaxis_range=[0, 120],
+        yaxis_range=[0, 1.2],
         xaxis=dict(
             tickmode='array',
             tickvals=[i for i in range(len(contexts))],

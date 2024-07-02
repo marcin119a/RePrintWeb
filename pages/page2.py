@@ -46,6 +46,23 @@ page2_layout = html.Div([
                 value=[k for k in data['COSMIC_v2_SBS_GRCh37.txt']],
             ),
     ]),
+    dcc.Upload(
+            id='upload-data-2-signatures',
+            children=html.Div(['Drag and drop your signatures']),
+            style={
+                'width': '300px',
+                'height': '60px',
+                'lineHeight': '60px',
+                'borderWidth': '1px',
+                'borderStyle': 'dashed',
+                'borderRadius': '5px',
+                'textAlign': 'center',
+                'margin': '10px'
+            },
+            multiple=False
+        ),
+    html.Div(id='info_uploader-2'),
+    dcc.Store(id='session-2-signatures', storage_type='session', data=None),
     dbc.Button("Generate plots", id="reload-button", className="ms-2"),
     dcc.Location(id='url-page2', refresh=False),
     dcc.Loading(
@@ -57,18 +74,17 @@ page2_layout = html.Div([
 ])
 
 
-
-import plotly.graph_objects as go
 import dash
-from dash.exceptions import PreventUpdate
+from utils.utils import reprint
 @app.callback(
     Output('plots-container-2', 'children'),
     [Input('initial-load', 'n_intervals'),
      Input('dropdown-2', 'value'),
      Input('reload-button', 'n_clicks')],
-    [State('signatures-dropdown-2', 'value')]
+    [State('signatures-dropdown-2', 'value'),
+     State('session-2-signatures', 'data')]
 )
-def update_graph(init_load, selected_file, n_clicks, selected_signatures):
+def update_graph(init_load, selected_file, n_clicks, selected_signatures, signatures):
     ctx = dash.callback_context
 
     if not ctx.triggered:
@@ -79,9 +95,15 @@ def update_graph(init_load, selected_file, n_clicks, selected_signatures):
     if trigger_id == 'initial-load' or trigger_id == 'reload-button':
         if not selected_signatures or not selected_file:
             return []
+        if signatures is not None:
+            df_signatures = pd.DataFrame(signatures['signatures_data'])
+            df_signatures.index = df_signatures['Type']
+            df_signatures = df_signatures.drop(columns='Type')
+            df_reprint = reprint(df_signatures, epsilon=0.0001)[selected_signatures]
 
-        df_signatures = pd.read_csv(f"data/signatures/{selected_file}", sep='\t', index_col=0)[selected_signatures]
-        df_reprint = pd.read_csv(f"data/cosmic_reprints/{selected_file}.reprint", sep='\t', index_col=0)[selected_signatures]
+        else:
+            df_signatures = pd.read_csv(f"data/signatures/{selected_file}", sep='\t', index_col=0)[selected_signatures]
+            df_reprint = pd.read_csv(f"data/cosmic_reprints/{selected_file}.reprint", sep='\t', index_col=0)[selected_signatures]
 
         plots = []
         for signature in selected_signatures:
@@ -92,7 +114,8 @@ def update_graph(init_load, selected_file, n_clicks, selected_signatures):
                             figure=create_main_dashboard(
                                 df_signatures,
                                 signature=signature,
-                                title=f'{signature} Frequency of Specific Tri-nucleotide Context Mutations by Mutation Type'
+                                title=f'{signature} Frequency of Specific Tri-nucleotide Context Mutations by Mutation Type',
+                                yaxis_title='Frequencies'
                             )
                         ), width=6
                     ),
@@ -101,19 +124,51 @@ def update_graph(init_load, selected_file, n_clicks, selected_signatures):
                             figure=create_main_dashboard(
                                 df_reprint,
                                 signature=signature,
-                                title=f'{signature} Reprint - Frequency of Specific Tri-nucleotide Context Mutations by Mutation Type'
+                                title=f'{signature} Reprint - Probabilities of Specific Tri-nucleotide Context Mutations by Mutation Type',
+                                yaxis_title='Probabilites'
                             )
                         ), width=6
                     )
                 ])
             )
         return plots
+from utils.utils import parse_signatures
 
 @app.callback(
-    [Output('signatures-dropdown-2', 'options'),
-     Output('signatures-dropdown-2', 'value')],
-    [Input('dropdown-2', 'value')]
+    [Output('session-2-signatures', 'data')],
+    [Input('upload-data-2-signatures', 'contents')],
+    [State('upload-data-2-signatures', 'filename')]
 )
-def set_options(selected_category):
-    return [{'label': f"{i}", 'value': i} for i in data[selected_category]], [i for i in data[selected_category]]
+def update_output_signatures(contents, filename):
+    if contents is not None:
+        df_signatures = parse_signatures(contents, filename)
 
+        signatures_info = "Some information extracted from df_signatures"
+        return [{'signatures_data': df_signatures.to_dict('records'), 'filename': filename, 'info': signatures_info}]
+    else:
+        return dash.no_update
+@app.callback(
+    [Output('signatures-dropdown-2', 'options'),
+     Output('signatures-dropdown-2', 'value'),
+     Output('dropdown-2', 'style'),
+     Output('info_uploader-2', 'children')
+     ],
+    [Input('dropdown-2', 'value'),
+     Input('session-2-signatures', 'data')]
+)
+def set_options(selected_category, contents):
+    if contents is not None:
+        df = pd.DataFrame(contents['signatures_data'])
+        df.index = df['Type']
+        df = df.drop(columns='Type')
+        signatures = df.columns.to_list()
+        return (
+            [{'label': signature, 'value': signature} for signature in signatures],
+            signatures,
+            {'display': 'None'},
+            f'Added your signatures {contents["filename"]}')
+
+    return ([{'label': f"{i}", 'value': i} for i in data[selected_category]],
+            [i for i in data[selected_category]],
+            {'display': 'block'},
+            'Not Uploaded')

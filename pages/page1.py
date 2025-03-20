@@ -109,6 +109,18 @@ page1_layout = html.Div([
     html.Div(id='info_uploader'),
     dcc.Store(id='session-1-signatures', storage_type='session', data=None),
     dbc.Row([
+        dbc.Col(html.Label("Hide Heatmap:", className="h5"), width="auto"),
+        dbc.Col(
+            dbc.Switch(
+                id="toggle-heatmap",
+                value=False, 
+                label="On/Off",
+                className="mb-3"
+            ),
+            width="auto"
+        ),
+    ], className="mb-4"),
+    dbc.Row([
         dbc.Col([
             html.H5("Signature similarity"),
             dcc.Graph(id='heatmap-plot')
@@ -160,13 +172,14 @@ from utils.utils import reprint, calculate_rmse, calculate_cosine
     [Input('submit-button', 'n_clicks'),
      Input('signatures-dropdown-1', 'value'),
      Input('dropdown-1', 'value')],
+     Input("toggle-heatmap", "value"),
     [State('distance-metric', 'value'),
      State('clustering-method', 'value'),
      State('epsilon', 'value'),
      State('session-1-signatures', 'data'),
      ]
 )
-def update_output(n_clicks, selected_signatures, selected_file, distance_metric, clustering_method, epsilon, signatures):
+def update_output(n_clicks, selected_signatures, selected_file, hide_heatmap, distance_metric, clustering_method, epsilon, signatures):
     if n_clicks:
         if signatures is not None:
             data = pd.DataFrame(signatures['signatures_data'])
@@ -175,16 +188,16 @@ def update_output(n_clicks, selected_signatures, selected_file, distance_metric,
             functions = {'rmse': calculate_rmse, 'cosine': calculate_cosine}
             df_reprint = reprint(data, epsilon=epsilon)
             return (f'Submitted: Distance Metric: {distance_metric}, Clustering Method: {clustering_method}, Epsilon: {epsilon}',
-                    create_heatmap_with_rmse(data, calc_func=functions[distance_metric], colorscale='BuPu'),
-                    create_heatmap_with_rmse(df_reprint, calc_func=functions[distance_metric], colorscale='Blues')
+                    create_heatmap_with_rmse(data, calc_func=functions[distance_metric], colorscale='BuPu', hide_heatmap=hide_heatmap),
+                    create_heatmap_with_rmse(df_reprint, calc_func=functions[distance_metric], colorscale='Blues', hide_heatmap=hide_heatmap)
                     )
         else:
             df_signatures = pd.read_csv(f"data/signatures/{selected_file}", sep='\t', index_col=0)[selected_signatures]
             functions = {'rmse': calculate_rmse, 'cosine': calculate_cosine}
             df_reprint = reprint(df_signatures, epsilon=epsilon)
             return (f'Submitted: Distance Metric: {distance_metric}, Clustering Method: {clustering_method}, Epsilon: {epsilon}',
-                    create_heatmap_with_rmse(df_signatures, calc_func=functions[distance_metric], colorscale='BuPu'),
-                    create_heatmap_with_rmse(df_reprint, calc_func=functions[distance_metric], colorscale='Blues')
+                    create_heatmap_with_rmse(df_signatures, calc_func=functions[distance_metric], colorscale='BuPu', hide_heatmap=hide_heatmap),
+                    create_heatmap_with_rmse(df_reprint, calc_func=functions[distance_metric], colorscale='Blues', hide_heatmap=hide_heatmap)
                     )
     else:
         if signatures is not None:
@@ -194,16 +207,16 @@ def update_output(n_clicks, selected_signatures, selected_file, distance_metric,
             functions = {'rmse': calculate_rmse, 'cosine': calculate_cosine}
             df_reprint = reprint(data, epsilon=epsilon)
             return (f'Submitted: Distance Metric: {distance_metric}, Clustering Method: {clustering_method}, Epsilon: {epsilon}',
-                    create_heatmap_with_rmse(data, calc_func=functions[distance_metric], colorscale='BuPu'),
-                    create_heatmap_with_rmse(df_reprint, calc_func=functions[distance_metric], colorscale='Blues')
+                    create_heatmap_with_rmse(data, calc_func=functions[distance_metric], colorscale='BuPu', hide_heatmap=hide_heatmap),
+                    create_heatmap_with_rmse(df_reprint, calc_func=functions[distance_metric], colorscale='Blues', hide_heatmap=hide_heatmap)
                     )
         else:
             df_signatures = pd.read_csv(f"data/signatures/{selected_file}", sep='\t', index_col=0)[selected_signatures]
             df_reprint = pd.read_csv(f"data/cosmic_reprints/{selected_file}.reprint", sep='\t', index_col=0)[selected_signatures]
 
             return (f'Distance Metric: {distance_metric}, Clustering Method: {clustering_method}, Epsilon: {epsilon}',
-                    create_heatmap_with_rmse(df_signatures, colorscale='BuPu'),
-                    create_heatmap_with_rmse(df_reprint, colorscale='Blues')
+                    create_heatmap_with_rmse(df_signatures, colorscale='BuPu', hide_heatmap=hide_heatmap),
+                    create_heatmap_with_rmse(df_reprint, colorscale='Blues', hide_heatmap=hide_heatmap)
                     )
 
 @app.callback(

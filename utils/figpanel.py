@@ -2,82 +2,56 @@ import plotly.express as px
 import plotly.graph_objects as go
 import plotly.figure_factory as ff
 
+import plotly.graph_objects as go
+import numpy as np
+
 def create_main_dashboard(df, signature, title, yaxis_title):
-    import plotly.graph_objects as go
-    import numpy as np
+    frequencies = df[signature] * 1
 
-    frequencies = df[signature]*1
-
-    # Definiowanie kontekstów i grup mutacji
     mutations = ['C>A', 'C>G', 'C>T', 'T>A', 'T>C', 'T>G']
     bases = ['A', 'C', 'G', 'T']
     contexts = [f'{x}[{m}]{y}' for m in mutations for x in bases for y in bases]
 
-    # Losowe wartości częstości dla każdego kontekstu
-    np.random.seed(42)  # Dla powtarzalności wyników
-
-    # Definiowanie kolorów dla każdej grupy mutacji
     colors = {
         'C>A': 'blue',
         'C>G': 'black',
         'C>T': 'red',
-        'T>A': 'purple',
-        'T>C': 'orange',
-        'T>G': 'brown'
+        'T>A': 'gray',
+        'T>C': 'green',
+        'T>G': 'pink'
     }
 
-    # Tworzenie wykresu
     fig = go.Figure()
-
-    # Dodawanie słupków dla każdej grupy mutacji
-    global_labels = []
+    
     for mutation in mutations:
         mutation_contexts = [c for c in contexts if f'[{mutation}]' in c]
-        mutation_frequencies = [frequencies[mc] for mc in mutation_contexts]
-        global_labels.extend(mutation_contexts)
+        mutation_frequencies = [frequencies[mc] if mc in frequencies.index else 0 for mc in mutation_contexts]
+        
         fig.add_trace(go.Bar(
             x=mutation_contexts,
             y=mutation_frequencies,
-            name=mutation,  # Nazwa dla legendy
-            marker_color=colors[mutation]  # Kolor dla grupy mutacji
+            name=mutation,
+            marker_color=colors[mutation]
         ))
 
-    # Dodanie prostokątów i tekstu nad grupami
-    for i, mutation in enumerate(mutations):
-        # Obliczanie pozycji dla prostokątów
-        x0 = i * 16 - 0.5
-        x1 = x0 + 16
-        # Dodanie prostokąta
-        fig.add_shape(type="rect",
-                      x0=x0, y0=5, x1=x1, y1=15,
-                      fillcolor=colors[mutation], opacity=0.5, line=dict(color=colors[mutation]))
-        # Dodanie tekstu
-        fig.add_annotation(x=(x0 + x1) / 2, y=10,
-                           text=mutation, showarrow=False,
-                           font=dict(color='white', size=12))
+    y_max = frequencies.max()
 
-    # Dodanie tytułów i formatowanie osi
     fig.update_layout(
         title=title,
         xaxis_title='Mutation Context',
         yaxis_title=yaxis_title,
-        xaxis_tickangle=-45,
+        xaxis_tickangle=-90,
         template='plotly_white',
         barmode='group',
         legend_title='Mutation Type',
-        yaxis_range=[0, 1.2],
-        xaxis=dict(
-            tickmode='array',
-            tickvals=[i for i in range(len(contexts))],
-            ticktext=[f"{x[0]}{x[2]}{x[6]}" for x in global_labels]
-        ),
-        yaxis=dict(
-            tickfont=dict(size=5)
-        )
+        yaxis_range=[0, y_max], 
+        margin=dict(l=50, r=50, t=50, b=150),
+        xaxis=dict(tickfont=dict(size=8)),
+        yaxis=dict(tickfont=dict(size=10))
     )
 
-
     return fig
+
 from scipy.spatial.distance import pdist, squareform
 
 def create_heatmap(df):

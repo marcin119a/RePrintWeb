@@ -95,7 +95,7 @@ def update_graph(init_load, selected_file, n_clicks, selected_signatures, signat
         if signatures is not None:
             df_signatures = pd.DataFrame(signatures['signatures_data'])
             print(df_signatures.shape)
-
+            print('test')
             df_signatures.index = df_signatures['Type']
             df_signatures = df_signatures.drop(columns='Type')
             df_reprint = reprint(df_signatures, epsilon=0.0001)[selected_signatures]
@@ -152,8 +152,9 @@ def update_output_signatures(contents, filename, existing_data):
                 existing_df = existing_df.drop(columns='Type')
 
             # Połączenie starych i nowych danych, bez duplikatów
-            merged_df = pd.concat([existing_df, new_df_signatures], axis=0).drop_duplicates()
-
+            merged_df = pd.merge(existing_df, new_df_signatures, on='Type', how='inner')
+            merged_df.index = merged_df['Type']
+            print(merged_df.to_csv('test.csv'))
         else:
             print('tutaj jest warunek')
             merged_df = new_df_signatures
@@ -181,19 +182,13 @@ def set_options(selected_category, contents):
         if 'Type' in df.columns:
             df.index = df['Type']
             df = df.drop(columns='Type')
-        
-        # Pobieramy listę sygnatur z załadowanych danych
+
         uploaded_signatures = df.columns.to_list()
 
-        # Pobieramy również oryginalne sygnatury
-        existing_signatures = data[selected_category]
-
-        # Łączymy oba zestawy sygnatur, unikając duplikatów
-        all_signatures = list(set(existing_signatures + uploaded_signatures))
 
         return (
-            [{'label': signature, 'value': signature} for signature in all_signatures],
-            all_signatures,  # Domyślnie zaznaczamy wszystkie
+            [{'label': signature, 'value': signature} for signature in uploaded_signatures],
+            uploaded_signatures,  # Domyślnie zaznaczamy wszystkie
             {'display': 'None'},
             f'Added your signatures from {contents["filename"]}'
         )

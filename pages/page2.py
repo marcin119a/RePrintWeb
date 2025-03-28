@@ -42,6 +42,28 @@ page2_layout = html.Div([
                 value=[k for k in data['COSMIC_v2_SBS_GRCh37.txt']],
             ),
     ]),
+    dbc.Alert(
+        [
+            html.H5("Expected File Format", style={"font-size": "18px", "font-weight": "bold"}),
+            html.P("The uploaded file should be a tab-separated file (.txt) containing mutation types and corresponding mutation signatures.",
+                style={"font-size": "14px"}),
+            html.P("Columns:", style={"font-size": "14px", "margin-bottom": "5px"}),
+            html.Ul([
+                html.Li("Type: Mutation type (e.g., A[C>A]A, A[C>A]C, ...).", style={"font-size": "13px"}),
+                html.Li("SBS1, SBS2, ..., SBSN: Signature mutation values (frequencies or probabilities).", style={"font-size": "13px"})
+            ], style={"padding-left": "20px", "margin-bottom": "5px"}),
+            html.P("Example first few rows:", style={"font-size": "14px", "margin-bottom": "5px"}),
+            html.Pre(
+                "Type\tSBS1\tSBS2\tSBS3\n"
+                "A[C>A]A\t0.001\t0.002\t0.003\n"
+                "A[C>A]C\t0.004\t0.005\t0.006",
+                style={"white-space": "pre-wrap", "font-family": "monospace", "font-size": "12px", "background-color": "#f8f9fa", "padding": "5px"}
+            ),
+        ],
+        color="info",
+        dismissable=True,
+        style={"font-size": "14px", "padding": "10px"}
+    ),
     dcc.Upload(
             id='upload-data-2-signatures',
             children=html.Div(['Drag and drop your signatures']),
@@ -56,7 +78,7 @@ page2_layout = html.Div([
                 'margin': '10px'
             },
             multiple=False
-        ),
+    ),
     html.Div(id='info_uploader-2'),
     dcc.Store(id='session-2-signatures', storage_type='session', data=None),
     dbc.Button("Generate plots", id="reload-button", className="ms-2"),

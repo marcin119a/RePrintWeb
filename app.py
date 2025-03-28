@@ -44,8 +44,9 @@ def set_active_nav(pathname):
         return False, True, False, False
     elif pathname == "/page2":
         return False, False, True, False
-    elif pathname == "/page2":
+    elif pathname == "/page4":
         return False, False, False, True
+
 
     # Default case if no path matches
     return False, False, False, False

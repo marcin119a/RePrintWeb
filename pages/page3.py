@@ -106,7 +106,6 @@ page3_layout = html.Div([
         dcc.Download(id="download-dataframe-csv-3")
     ], fluid=True),
 ])
-from utils.utils import reprint
 
 @app.callback(
     [Output('signatures-dropdown-3', 'options'),

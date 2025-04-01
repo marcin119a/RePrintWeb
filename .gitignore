@@ -4,7 +4,6 @@ __pycache__
 .DS_Store
 output
 .vscode
-
 _build/
 _build_doctrees/
 _build_html/

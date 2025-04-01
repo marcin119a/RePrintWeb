@@ -179,22 +179,24 @@ def update_output_signatures(contents, filename, existing_data):
     if contents is not None:
         new_df_signatures = parse_signatures(contents, filename)
 
-        # Sprawdzenie, czy istnieją już zapisane sygnatury
         if existing_data is not None:
             existing_df = pd.DataFrame(existing_data['signatures_data'])
 
-            # Jeśli indeks to 'Type', ustawienie go ponownie
             if 'Type' in existing_df.columns:
                 existing_df.index = existing_df['Type']
                 existing_df = existing_df.drop(columns='Type')
 
-            # Połączenie starych i nowych danych, bez duplikatów
-            merged_df = pd.merge(existing_df, new_df_signatures, on='Type', how='inner')
+            merged_df = pd.merge(
+                existing_df,
+                new_df_signatures,
+                on='Type',
+                how='inner',
+                suffixes=('_ref', '_query')
+            )
             merged_df.index = merged_df['Type']
         else:
             merged_df = new_df_signatures
 
-        # Konwersja do listy rekordów dla sesji
         signatures_info = f"Updated signatures with {filename}"
         return [{'signatures_data': merged_df.to_dict('records'), 'filename': filename, 'info': signatures_info}]
     

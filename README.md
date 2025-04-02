@@ -78,25 +78,6 @@ A[C>A]A	0.01	0.02
 A[C>A]C	0.03	0.04
 ```
 
----
-
-### ⚙️ Environment Variables (`.env`)
-```env
-DEBUG=True
-SECRET_KEY=super_secret_key
-DB_DEFAULT_NAME=reprint
-EMAIL_HOST=smtp.gmail.com
-GOOGLE_CLIENT_ID=xxxx.apps.googleusercontent.com
-```
-
----
-
-### ✅ Running Tests
-
-#### Run all tests:
-```bash
-pytest tests/
-```
 
 ---
 

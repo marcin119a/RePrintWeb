@@ -24,7 +24,7 @@
 
 #### 1. Clone the repository
 ```bash
-git clone https://github.com/your-username/reprint.git
+git clone git@github.com:marcin119a/RePrint.git
 cd reprint
 ```
 
@@ -100,10 +100,10 @@ pytest tests/
 
 ---
 
-### 🧪 How It Works
+### 🧪 How It Works ?
 
 1. Select a COSMIC reference file from the dropdown.
-2. Upload your own signature data using drag-and-drop.
+2. Upload your signature data using drag-and-drop.
 3. Click **Generate Plots** to visualize the comparison.
 4. Click **Clear Session** to reset uploaded data.
 

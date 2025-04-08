@@ -7,7 +7,6 @@ navbar = dbc.NavbarSimple(
         dbc.NavItem(dbc.NavLink("Custom Reprints", href="/page2", id="nav-page2")),
         dbc.NavItem(dbc.NavLink("Merge signatures", href="/page4", id="nav-page4")),
     ],
-    brand="Reprint",
     brand_href="/",
     color="primary",
     dark=True,

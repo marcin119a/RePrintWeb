@@ -89,7 +89,8 @@ def create_heatmap(df):
             colorbar=dict(
                 x=1.2,
                 xpad=10
-            )
+            ),
+            hovertemplate='x: %{x}<br>y: %{y}<br>similarity: %{z:.3f}<extra></extra>'
         )
     ]
 
@@ -198,7 +199,8 @@ def create_heatmap_with_rmse(df, calc_func=calculate_rmse, colorscale='Blues', h
                 colorbar=dict(
                     x=1.2,
                     xpad=10
-                )
+                ),
+                hovertemplate='x: %{x}<br>y: %{y}<br>similarity: %{z:.3f}<extra></extra>'
             )
         ]
 
@@ -252,6 +254,10 @@ def create_heatmap_with_rmse(df, calc_func=calculate_rmse, colorscale='Blues', h
 
     fig.update_layout(paper_bgcolor="rgba(0,0,0,0)",
                       plot_bgcolor="rgba(0,0,0,0)")
+
+    fig.update_layout(
+        font=dict(size=8)
+    )
 
     return fig
 

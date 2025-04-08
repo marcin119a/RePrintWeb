@@ -1,4 +1,5 @@
 from utils.figpanel import create_heatmap_with_rmse
+from utils.utils import FILES, DEFAULT_SIGNATURES
 from main import app
 from dash import dcc, html, Input, Output, State
 import dash_bootstrap_components as dbc
@@ -6,26 +7,80 @@ from pages.nav import navbar
 import pandas as pd
 
 
-files = [
-    'COSMIC_v1_SBS_GRCh37.txt', 'COSMIC_v2_SBS_GRCh37.txt', 'COSMIC_v3.1_SBS_GRCh37.txt',
-    'COSMIC_v3.2_SBS_GRCh37.txt', 'COSMIC_v3.3.1_SBS_GRCh37.txt', 'COSMIC_v3.4_SBS_GRCh37.txt', 'COSMIC_v3_SBS_GRCh37.txt',
-    'COSMIC_v1_SBS_GRCh38.txt', 'COSMIC_v2_SBS_GRCh38.txt', 'COSMIC_v3.1_SBS_GRCh38.txt',
-    'COSMIC_v3.2_SBS_GRCh38.txt', 'COSMIC_v3.3.1_SBS_GRCh38.txt', 'COSMIC_v3.4_SBS_GRCh38.txt', 'COSMIC_v3_SBS_GRCh38.txt'
-]
 
 data = {}
-
-for file in files:
+for file in FILES:
     data[file] = pd.read_csv(f'data/signatures/{file}', sep='\t').columns[1:].to_list()
 
-dropdown_options = [{'label': file, 'value': file} for file in files]
+dropdown_options = [{'label': file, 'value': file} for file in FILES]
 
 
 # Application layout
 page1_layout = html.Div([
     navbar,
     dbc.Container([
-        dbc.Button("Advanced Options", id="toggle-button", className="mb-3", color="dark"),
+        dbc.Card(
+            [
+                dbc.CardHeader("Actions"),
+                dbc.CardBody(
+                    dbc.Row(
+                        [
+                            dbc.Col(
+                                [
+                                    dbc.Button(
+                                        "Advanced Options",
+                                        id="toggle-button",
+                                        color="dark",
+                                        className="w-100"
+                                    ),
+                                    dbc.Tooltip(
+                                        "Show or hide advanced settings",
+                                        target="toggle-button",
+                                        placement="bottom"
+                                    )
+                                ],
+                                width=2
+                            ),
+                            dbc.Col(
+                                [
+                                    dbc.Button(
+                                        "Download Reprints",
+                                        id="btn_csv-1",
+                                        color="info",
+                                        className="w-100"
+                                    ),
+                                    dbc.Tooltip(
+                                        "Download CSV file with reprint data",
+                                        target="btn_csv-1",
+                                        placement="bottom"
+                                    )
+                                ],
+                                width=2
+                            ),
+                            dbc.Col(
+                                [
+                                    dbc.Button(
+                                        "Run Analysis",
+                                        id="submit-button",
+                                        color="primary",
+                                        className="w-100"
+                                    ),
+                                    dbc.Tooltip(
+                                        "Start the analysis pipeline",
+                                        target="submit-button",
+                                        placement="bottom"
+                                    )
+                                ],
+                                width=2
+                            ),
+                        ],
+                        className="mb-3",
+                        align="center"
+                    )
+                )
+            ],
+            className="mb-4 shadow"
+        ),
         dbc.Collapse(
             dbc.Card(dbc.CardBody([
                 dbc.Form([
@@ -69,7 +124,6 @@ page1_layout = html.Div([
                             ),
                         ])
                     ]),
-                    dbc.Button("Submit", id="submit-button", className="mt-3", color="primary")
                 ])
             ])),
             id="collapse-form"
@@ -77,18 +131,18 @@ page1_layout = html.Div([
         html.Div(id='form-output')
     ], fluid=True),
     dbc.Container([
-    dbc.Row([
+        dbc.Row([
         dcc.Dropdown(
             id='dropdown-1',
             options=dropdown_options,
             disabled=False,
-            value=files[0]
+            value=DEFAULT_SIGNATURES
         ),
         dcc.Dropdown(
                 id='signatures-dropdown-1',
                 options=[{'label': k, 'value': k} for k in data.keys()],
                 multi=True,
-                value=[k for k in data['COSMIC_v2_SBS_GRCh37.txt']],
+                value=[k for k in data[DEFAULT_SIGNATURES]],
             )
     ]),
         dbc.Alert(
@@ -128,7 +182,7 @@ page1_layout = html.Div([
             },
             multiple=False
         ),
-        
+
     html.Div(id='info_uploader'),
     dcc.Store(id='session-1-signatures', storage_type='session', data=None),
     dbc.Row([
@@ -136,7 +190,7 @@ page1_layout = html.Div([
         dbc.Col(
             dbc.Switch(
                 id="toggle-heatmap",
-                value=False, 
+                value=False,
                 label="On/Off",
                 className="mb-3"
             ),
@@ -146,16 +200,23 @@ page1_layout = html.Div([
     dbc.Row([
         dbc.Col([
             html.H5("Signature similarity"),
-            dcc.Graph(id='heatmap-plot')
+            dcc.Loading(
+                id="loading-heatmap-plot",
+                type="default",
+                children=dcc.Graph(id='heatmap-plot')
+            )
         ]),
         dbc.Col([
             html.H5("RePrint similarity"),
-            dcc.Graph(id='heatmap-reprint-plot')
+            dcc.Loading(
+                id="loading-heatmap-reprint-plot",
+                type="default",
+                children=dcc.Graph(id='heatmap-reprint-plot')
+            )
         ])
     ]),
     dcc.Location(id='url-page1', refresh=False),
-    dbc.Button("Download TSV", id="btn_csv", className="mt-3", color="dark"),
-    dcc.Download(id="download-dataframe-csv")
+    dcc.Download(id="download-dataframe-csv-1")
     ], fluid=True),
 
 ])
@@ -269,25 +330,31 @@ def set_options(selected_category, contents):
             'Not Uploaded')
 
 
-
 @app.callback(
-    Output("download-dataframe-csv", "data"),
-    Input("btn_csv", "n_clicks"),
+    Output("download-dataframe-csv-1", "data"),
+    Input("btn_csv-1", "n_clicks"),
     [State('signatures-dropdown-1', 'value'),
      State('dropdown-1', 'value'),
      State('epsilon', 'value'),
      State('session-1-signatures', 'data')],
     prevent_initial_call=True
 )
-def func(n_clicks, selected_signatures, selected_file, epsilon, contents):
+def download_dataframe(n_clicks, selected_signatures, selected_file, epsilon, contents):
     if contents is not None:
         df_signatures = pd.DataFrame(contents['signatures_data'])
         df_signatures.index = df_signatures['Type']
         df_signatures = df_signatures.drop(columns='Type')[selected_signatures]
         df_reprint = reprint(df_signatures, epsilon=epsilon)
-        return dcc.send_data_frame(df_reprint.to_csv, filename="data.csv")
+
+        df_reprint.columns = [f"reprint_{col}" for col in df_reprint.columns]
+
+        return dcc.send_data_frame(df_reprint.to_csv, filename="reprints.csv")
     else:
         df_signatures = pd.read_csv(f"data/signatures/{selected_file}", sep='\t', index_col=0)[selected_signatures]
         df_reprint = reprint(df_signatures, epsilon=epsilon)
-        return dcc.send_data_frame(df_reprint.to_csv, filename="data.csv")
+
+        df_reprint.columns = [f"reprint_{col}" for col in df_reprint.columns]
+
+        return dcc.send_data_frame(df_reprint.to_csv, filename="reprints.csv")
+
 

@@ -21,6 +21,11 @@ FILES = [
 
 DEFAULT_SIGNATURES = 'COSMIC_v3.4_SBS_GRCh38.txt'
 
+
+linkage_methods = ['single', 'complete', 'average', 'ward']
+
+DEFAULT_LINKAGE_METHOD = 'complete'
+
 def normalize(data):
     return (data - np.nanmin(data)) / (np.nanmax(data) - np.nanmin(data))
 

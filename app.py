@@ -12,7 +12,27 @@ app.layout = html.Div([
     dcc.Location(id='url', refresh=False),
     html.Div(id='page-content'),
 ])
-
+# Favicon i title
+app.index_string = '''
+<!DOCTYPE html>
+<html>
+    <head>
+        {%metas%}
+        <title>DNA Repair Footprint Uncovers Contribution of DNA Repair Mechanism to Mutational Signatures</title>
+        {%favicon%}
+        {%css%}
+        <link rel="icon" type="image/png" href="/assets/favicon.png">
+    </head>
+    <body>
+        {%app_entry%}
+        <footer>
+            {%config%}
+            {%scripts%}
+            {%renderer%}
+        </footer>
+    </body>
+</html>
+'''
 
 
 @app.callback(Output('page-content', 'children'),

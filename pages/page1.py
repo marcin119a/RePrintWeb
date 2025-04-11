@@ -1,5 +1,5 @@
 from utils.figpanel import create_heatmap_with_custom_sim
-from utils.utils import FILES, DEFAULT_SIGNATURES
+from utils.utils import FILES, DEFAULT_SIGNATURES, linkage_methods, DEFAULT_LINKAGE_METHOD
 from main import app
 from dash import dcc, html, Input, Output, State
 import dash_bootstrap_components as dbc
@@ -13,7 +13,6 @@ for file in FILES:
     data[file] = pd.read_csv(f'data/signatures/{file}', sep='\t').columns[1:].to_list()
 
 dropdown_options = [{'label': file, 'value': file} for file in FILES]
-linkage_methods = ['single', 'complete', 'average', 'ward']
 
 
 # Application layout
@@ -61,7 +60,23 @@ page1_layout = html.Div([
                             dbc.Col(
                                 [
                                     dbc.Button(
-                                        "Run Analysis",
+                                        "Download Signatures",
+                                        id="btn_csv-signatures",
+                                        color="secondary",
+                                        className="w-100"
+                                    ),
+                                    dbc.Tooltip(
+                                        "Download CSV file with selected signature data",
+                                        target="btn_csv-signatures",
+                                        placement="bottom"
+                                    )
+                                ],
+                                width=2
+                            ),
+                            dbc.Col(
+                                [
+                                    dbc.Button(
+                                        "Reload heatmaps",
                                         id="submit-button",
                                         color="primary",
                                         className="w-100"
@@ -106,7 +121,7 @@ page1_layout = html.Div([
                                 id='clustering-method',
                                 options=[{'label': method.title(), 'value': method} for method in linkage_methods],
                                 placeholder="Select clustering method",
-                                value='single',
+                                value=DEFAULT_LINKAGE_METHOD,
                                 clearable=False,
                             ),
                         ])
@@ -216,7 +231,8 @@ page1_layout = html.Div([
         ])
     ]),
     dcc.Location(id='url-page1', refresh=False),
-    dcc.Download(id="download-dataframe-csv-1")
+    dcc.Download(id="download-dataframe-csv-1"),
+    dcc.Download(id="download-dataframe-csv-signatures")
     ], fluid=True),
 
 ])
@@ -358,3 +374,25 @@ def download_dataframe(n_clicks, selected_signatures, selected_file, epsilon, co
         return dcc.send_data_frame(df_reprint.to_csv, filename="reprints.csv")
 
 
+from dash import dcc, Input, Output, State
+import pandas as pd
+
+@app.callback(
+    Output("download-dataframe-csv-signatures", "data"),
+    Input("btn_csv-signatures", "n_clicks"),
+    [State('signatures-dropdown-1', 'value'),
+     State('dropdown-1', 'value'),
+     State('session-1-signatures', 'data')],
+    prevent_initial_call=True
+)
+def download_signatures_only(n_clicks, selected_signatures, selected_file, contents):
+    if contents is not None:
+        # Dane z sesji
+        df_signatures = pd.DataFrame(contents['signatures_data'])
+        df_signatures.index = df_signatures['Type']
+        df_signatures = df_signatures.drop(columns='Type')[selected_signatures]
+    else:
+        # Dane z pliku
+        df_signatures = pd.read_csv(f"data/signatures/{selected_file}", sep='\t', index_col=0)[selected_signatures]
+
+    return dcc.send_data_frame(df_signatures.to_csv, filename="signatures.csv")

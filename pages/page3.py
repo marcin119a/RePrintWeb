@@ -1,4 +1,5 @@
 from utils.figpanel import create_heatmap_with_custom_sim
+from utils.utils import linkage_methods, DEFAULT_LINKAGE_METHOD
 from main import app
 from dash import dcc, html, Input, Output, State
 import dash_bootstrap_components as dbc
@@ -50,11 +51,10 @@ page3_layout = html.Div([
                             dbc.Label("Clustering Method", html_for="clustering-method"),
                             dcc.Dropdown(
                                 id='clustering-method-3',
-                                options=[
-                                    {'label': 'Linkage Algorithm', 'value': 'linkage'}
-                                ],
+                                options=[{'label': method.title(), 'value': method} for method in linkage_methods],
                                 placeholder="Select clustering method",
-                                value='linkage',
+                                value=DEFAULT_LINKAGE_METHOD,
+                                clearable=False,
                             ),
                         ])
                     ]),
@@ -145,8 +145,8 @@ def update_output(n_clicks, selected_files, selected_signatures, distance_metric
 
         return (
             f'Submitted: Distance Metric: {distance_metric}, Clustering Method: {clustering_method}, Epsilon: {epsilon}',
-            create_heatmap_with_custom_sim(combined_df, calc_func=functions[distance_metric], colorscale='BuPu'),
-            create_heatmap_with_custom_sim(combined_reprint, calc_func=functions[distance_metric],  colorscale='Blues')
+            create_heatmap_with_custom_sim(combined_df, calc_func=functions[distance_metric], colorscale='BuPu', method=clustering_method),
+            create_heatmap_with_custom_sim(combined_reprint, calc_func=functions[distance_metric],  colorscale='Blues', method=clustering_method)
         )
     return '', {}, {}
 

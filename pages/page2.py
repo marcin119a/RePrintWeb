@@ -62,6 +62,22 @@ page2_layout = html.Div([
                     dbc.Col(
                         [
                             dbc.Button(
+                                "Download Signatures",
+                                id="btn_csv-signatures-2",
+                                color="secondary",
+                                className="w-100"
+                            ),
+                            dbc.Tooltip(
+                                "Download CSV file with selected signature data",
+                                target="btn_csv-signatures-2",
+                                placement="bottom"
+                            )
+                        ],
+                        width=2
+                    ),
+                    dbc.Col(
+                        [
+                            dbc.Button(
                                 "Generate Plots",
                                 id="reload-button",
                                 color="success",
@@ -165,8 +181,9 @@ page2_layout = html.Div([
     )
     ], fluid=True),
     dcc.Download(id="download-dataframe-csv-2"),
-    dcc.Store(id='plots-page-store', data=0),  # przechowuje numer strony
-    html.Div(id='plots-navigation', className='mb-3'),  # przyciski paginacji
+    dcc.Download(id="download-dataframe-csv-signatures-2"),
+    dcc.Store(id='plots-page-store', data=0),    # stores the page number
+    html.Div(id='plots-navigation', className='mb-3'),  # pagination buttons
     html.Div(id='plots-container-2')
 ])
 
@@ -338,3 +355,23 @@ def toggle_collapse(n, is_open):
     if n:
         return not is_open
     return is_open
+
+@app.callback(
+    Output("download-dataframe-csv-signatures-2", "data"),
+    Input("btn_csv-signatures-2", "n_clicks"),
+    [
+        State('signatures-dropdown-2', 'value'),
+        State('dropdown-2', 'value'),
+        State('session-2-signatures', 'data')
+    ],
+    prevent_initial_call=True
+)
+def download_signatures_only_2(n_clicks, selected_signatures, selected_file, contents):
+    if contents is not None:
+        df_signatures = pd.DataFrame(contents['signatures_data'])
+        df_signatures.index = df_signatures['Type']
+        df_signatures = df_signatures.drop(columns='Type')[selected_signatures]
+    else:
+        df_signatures = pd.read_csv(f"data/signatures/{selected_file}", sep='\t', index_col=0)[selected_signatures]
+
+    return dcc.send_data_frame(df_signatures.to_csv, filename="signatures.csv")

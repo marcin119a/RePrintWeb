@@ -1,8 +1,8 @@
-import plotly.express as px
-import plotly.graph_objects as go
 import plotly.figure_factory as ff
-
+from scipy.spatial.distance import squareform
 import plotly.graph_objects as go
+from utils.utils import calculate_rmse
+from scipy.cluster.hierarchy import linkage
 import numpy as np
 
 def create_main_dashboard(df, signature, title, yaxis_title):
@@ -52,111 +52,8 @@ def create_main_dashboard(df, signature, title, yaxis_title):
 
     return fig
 
-from scipy.spatial.distance import pdist, squareform
 
-def create_heatmap(df):
-
-    df = df.T
-    labels = df.index.tolist()
-
-    fig = ff.create_dendrogram(df.values, labels=labels, orientation='bottom')
-    fig.for_each_trace(lambda trace: trace.update(visible=False))
-
-    for i in range(len(fig['data'])):
-        fig['data'][i]['yaxis'] = 'y2'
-
-    dendro_side = ff.create_dendrogram(df.values, orientation='right')
-    for i in range(len(dendro_side['data'])):
-        dendro_side['data'][i]['xaxis'] = 'x2'
-
-    for data in dendro_side['data']:
-        fig.add_trace(data)
-
-    #  Create Heatmap
-    dendro_leaves = dendro_side['layout']['yaxis']['ticktext']
-    dendro_leaves = list(map(int, dendro_leaves))
-    data_dist = pdist(df.values)
-    heat_data = squareform(data_dist)
-    heat_data = heat_data[dendro_leaves, :]
-    heat_data = heat_data[:, dendro_leaves]
-
-    heatmap = [
-        go.Heatmap(
-            x=dendro_leaves,
-            y=dendro_leaves,
-            z=heat_data,
-            colorscale='Blues',
-            colorbar=dict(
-                x=1.2,
-                xpad=10
-            ),
-            hovertemplate='x: %{x}<br>y: %{y}<br>similarity: %{z:.3f}<extra></extra>'
-        )
-    ]
-
-    heatmap[0]['x'] = fig['layout']['xaxis']['tickvals']
-    heatmap[0]['y'] = dendro_side['layout']['yaxis']['tickvals']
-
-    # Add Heatmap Data to Figure
-    for data in heatmap:
-        fig.add_trace(data)
-
-    # Edit Layout
-    fig.update_layout({'width': 600, 'height': 600,
-                       'showlegend': False, 'hovermode': 'closest',
-                       })
-
-    # Edit xaxis
-    fig.update_layout(xaxis={'domain': [.15, 1],
-                             'mirror': False,
-                             'showgrid': False,
-                             'showline': False,
-                             'zeroline': False,
-                             'side': 'top',
-                             'tickvals': heatmap[0]['x'],
-                             'ticktext': [labels[i] for i in dendro_leaves]
-                             })
-
-    # Edit xaxis2
-    fig.update_layout(xaxis2={'domain': [0, .15],
-                              'mirror': False,
-                              'showgrid': False,
-                              'showline': False,
-                              'zeroline': False,
-                              'showticklabels': False,
-                              })
-
-    # Edit yaxis
-    fig.update_layout(yaxis={'domain': [0, 1],
-                             'mirror': False,
-                             'showgrid': False,
-                             'showline': False,
-                             'zeroline': False,
-                             'side': 'right',
-                             'tickvals': heatmap[0]['y'],
-                             'ticktext': [labels[i] for i in dendro_leaves]
-                             })
-
-    # Edit yaxis2
-    fig.update_layout(yaxis2={'domain': [.825, .975],
-                              'mirror': False,
-                              'showgrid': False,
-                              'showline': False,
-                              'zeroline': False,
-                              'showticklabels': True,
-                              'ticks': "",
-                              })
-
-    fig.update_layout(paper_bgcolor="rgba(0,0,0,0)",
-                      plot_bgcolor="rgba(0,0,0,0)")
-
-    return fig
-
-from utils.utils import calculate_rmse
-from scipy.spatial.distance import squareform
-import numpy as np
-
-def create_heatmap_with_rmse(df, calc_func=calculate_rmse, colorscale='Blues', hide_heatmap=False):
+def create_heatmap_with_custom_sim(df, calc_func=calculate_rmse, colorscale='Blues', hide_heatmap=False, method='complete'):
     # Transpose data and get labels
     df = df.T
     labels = df.index.tolist()
@@ -169,12 +66,15 @@ def create_heatmap_with_rmse(df, calc_func=calculate_rmse, colorscale='Blues', h
             dist_matrix[i, j] = rmse
             dist_matrix[j, i] = rmse
 
+    condensed_rmse = squareform(dist_matrix)
+    Z = linkage(condensed_rmse, method=method)
+
     # Create bottom dendrogram
-    fig = ff.create_dendrogram(dist_matrix, labels=labels, orientation='bottom')
+    fig = ff.create_dendrogram(df.values, labels=labels, orientation='bottom', linkagefun=lambda _: Z)
     fig.for_each_trace(lambda trace: trace.update(visible=False))
 
     # Create side dendrogram
-    dendro_side = ff.create_dendrogram(dist_matrix, orientation='right')
+    dendro_side = ff.create_dendrogram(df.values, orientation='right', linkagefun=lambda _: Z)
     if not hide_heatmap:
         for i in range(len(dendro_side['data'])):
             dendro_side['data'][i]['xaxis'] = 'x2'

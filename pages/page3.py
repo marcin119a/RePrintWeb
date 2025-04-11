@@ -1,4 +1,4 @@
-from utils.figpanel import create_heatmap_with_rmse
+from utils.figpanel import create_heatmap_with_custom_sim
 from main import app
 from dash import dcc, html, Input, Output, State
 import dash_bootstrap_components as dbc
@@ -145,8 +145,8 @@ def update_output(n_clicks, selected_files, selected_signatures, distance_metric
 
         return (
             f'Submitted: Distance Metric: {distance_metric}, Clustering Method: {clustering_method}, Epsilon: {epsilon}',
-            create_heatmap_with_rmse(combined_df, calc_func=functions[distance_metric], colorscale='BuPu'),
-            create_heatmap_with_rmse(combined_reprint, calc_func=functions[distance_metric],  colorscale='Blues')
+            create_heatmap_with_custom_sim(combined_df, calc_func=functions[distance_metric], colorscale='BuPu'),
+            create_heatmap_with_custom_sim(combined_reprint, calc_func=functions[distance_metric],  colorscale='Blues')
         )
     return '', {}, {}
 

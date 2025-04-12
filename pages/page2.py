@@ -171,7 +171,7 @@ page2_layout = html.Div([
             },
             multiple=False
     ),
-    html.Div(id='upload-error-message-1'),
+    html.Div(id='upload-error-message-2'),
     html.Div(id='info_uploader-2'),
     dcc.Store(id='session-2-signatures', storage_type='session', data=None),
     dcc.Location(id='url-page2', refresh=False),
@@ -301,9 +301,9 @@ def update_session_2_data(contents, filename):
     return dash.no_update
 
 @app.callback(
-    Output('upload-error-message-1', 'children'),
-    Input('upload-data-1-signatures', 'contents'),
-    State('upload-data-1-signatures', 'filename'),
+    Output('upload-error-message-2', 'children'),
+    Input('upload-data-2-signatures', 'contents'),
+    State('upload-data-2-signatures', 'filename'),
     prevent_initial_call=True
 )
 def show_upload_status(contents, filename):

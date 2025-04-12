@@ -171,6 +171,7 @@ page2_layout = html.Div([
             },
             multiple=False
     ),
+    html.Div(id='upload-error-message-1'),
     html.Div(id='info_uploader-2'),
     dcc.Store(id='session-2-signatures', storage_type='session', data=None),
     dcc.Location(id='url-page2', refresh=False),
@@ -281,18 +282,40 @@ def update_graph(init_load, selected_file, n_clicks, current_page, selected_sign
     return [], None
 
 @app.callback(
-    [Output('session-2-signatures', 'data')],
-    [Input('upload-data-2-signatures', 'contents')],
-    [State('upload-data-2-signatures', 'filename')]
+    Output('session-2-signatures', 'data'),
+    Input('upload-data-2-signatures', 'contents'),
+    State('upload-data-2-signatures', 'filename'),
+    prevent_initial_call=True
 )
-def update_output_signatures(contents, filename):
+def update_session_2_data(contents, filename):
     if contents is not None:
-        df_signatures = parse_signatures(contents, filename)
+        try:
+            df_signatures = parse_signatures(contents, filename)
+            return {
+                'signatures_data': df_signatures.to_dict('records'),
+                'filename': filename,
+                'info': "Signatures uploaded successfully"
+            }
+        except Exception:
+            return dash.no_update
+    return dash.no_update
 
-        signatures_info = "Some information extracted from df_signatures"
-        return [{'signatures_data': df_signatures.to_dict('records'), 'filename': filename, 'info': signatures_info}]
-    else:
-        return dash.no_update
+@app.callback(
+    Output('upload-error-message-1', 'children'),
+    Input('upload-data-1-signatures', 'contents'),
+    State('upload-data-1-signatures', 'filename'),
+    prevent_initial_call=True
+)
+def show_upload_status(contents, filename):
+    if contents is not None:
+        try:
+            _ = parse_signatures(contents, filename)
+            return dbc.Alert(f"Successfully loaded file: {filename}", color="success", dismissable=True)
+        except Exception as e:
+            return dbc.Alert(f"Error while processing file '{filename}'", color="danger", dismissable=True)
+    return ""
+
+
 @app.callback(
     [Output('signatures-dropdown-2', 'options'),
      Output('signatures-dropdown-2', 'value'),

@@ -197,7 +197,7 @@ page1_layout = html.Div([
             },
             multiple=False
         ),
-
+    html.Div(id='upload-error-message-1'),
     html.Div(id='info_uploader'),
     dcc.Store(id='session-1-signatures', storage_type='session', data=None),
     dbc.Row([
@@ -253,6 +253,21 @@ def update_output_signatures(contents, filename):
         return [{'signatures_data': df_signatures.to_dict('records'), 'filename': filename, 'info': signatures_info}]
     else:
         return dash.no_update
+
+@app.callback(
+    Output('upload-error-message-1', 'children'),
+    Input('upload-data-1-signatures', 'contents'),
+    State('upload-data-1-signatures', 'filename'),
+    prevent_initial_call=True
+)
+def show_upload_status(contents, filename):
+    if contents is not None:
+        try:
+            _ = parse_signatures(contents, filename)
+            return dbc.Alert(f"Successfully loaded file: {filename}", color="success", dismissable=True)
+        except Exception as e:
+            return dbc.Alert(f"Error while processing file '{filename}'", color="danger", dismissable=True)
+    return ""
 
 @app.callback(
     Output("collapse-form", "is_open"),

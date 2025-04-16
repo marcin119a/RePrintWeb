@@ -164,8 +164,8 @@ def update_graph(init_load, selected_file, n_clicks, selected_signatures, signat
                     )
                 ])
             )
-        from utils.figpanel import create_heatmap_with_rmse
-        return plots, create_heatmap_with_rmse(df_signatures),create_heatmap_with_rmse(df_reprint)
+        from utils.figpanel import create_heatmap_with_custom_sim
+        return plots, create_heatmap_with_custom_sim(df_signatures),create_heatmap_with_custom_sim(df_reprint)
     else:
         return [], {}, {}
 

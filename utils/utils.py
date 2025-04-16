@@ -77,8 +77,24 @@ import io
 def parse_signatures(contents, filename):
     content_type, content_string = contents.split(',')
 
-    decoded = base64.b64decode(content_string)
-    if 'txt' in filename:
-        return pd.read_csv(io.StringIO(decoded.decode('utf-8')), sep='\t')
-    if 'csv' in filename:
-        return pd.read_csv(io.StringIO(decoded.decode('utf-8')), index_col=[0, 1], sep=',')
+    try:
+        decoded = base64.b64decode(content_string)
+        decoded_str = decoded.decode('utf-8')
+        buffer = io.StringIO(decoded_str)
+
+        # Wybór parsera na podstawie rozszerzenia
+        if filename.endswith('.txt') or filename.endswith('.tsv'):
+            df = pd.read_csv(buffer, sep='\t')
+        elif filename.endswith('.csv'):
+            df = pd.read_csv(buffer, sep=',', index_col=None)
+        else:
+            raise ValueError(f"Unsupported file format for file: {filename}")
+
+        # Sprawdzenie wymaganych kolumn
+        if 'Type' not in df.columns:
+            raise ValueError("Uploaded file must include a 'Type' column.")
+
+        return df
+
+    except Exception as e:
+        raise ValueError(f"Error while parsing file {filename}: {str(e)}")

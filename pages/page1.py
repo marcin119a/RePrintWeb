@@ -1,10 +1,11 @@
 from utils.figpanel import create_heatmap_with_custom_sim
-from utils.utils import FILES, DEFAULT_SIGNATURES, linkage_methods, DEFAULT_LINKAGE_METHOD
+from utils.utils import FILES, DEFAULT_SIGNATURES, linkage_methods, DEFAULT_LINKAGE_METHOD, reprint, calculate_rmse, calculate_cosine
 from main import app
-from dash import dcc, html, Input, Output, State
+from dash import dcc, html, Input, Output, State, ctx
 import dash_bootstrap_components as dbc
 from pages.nav import navbar
 import pandas as pd
+
 
 
 
@@ -84,7 +85,9 @@ page1_layout = html.Div([
                                     dbc.Tooltip(
                                         "Start the analysis pipeline",
                                         target="submit-button",
-                                        placement="bottom"
+                                        placement="bottom",
+                                        id="tooltip-button",
+                                        style={"display": "none"}
                                     )
                                 ],
                                 width=2
@@ -281,22 +284,23 @@ def toggle_collapse(n, is_open):
         return not is_open
     return is_open
 
-from utils.utils import reprint, calculate_rmse, calculate_cosine
+
+
 @app.callback(
     [Output('form-output', 'children'),
      Output('heatmap-plot', 'figure'),
      Output('heatmap-reprint-plot', 'figure')],
     [Input('submit-button', 'n_clicks'),
-     Input('signatures-dropdown-1', 'value'),
-     Input('dropdown-1', 'value')],
-     Input("toggle-heatmap", "value"),
-    [State('distance-metric', 'value'),
+     Input('dropdown-1', 'value'),
+     Input("toggle-heatmap", "value")],
+    [State('signatures-dropdown-1', 'value'),
+     State('distance-metric', 'value'),
      State('clustering-method', 'value'),
      State('epsilon', 'value'),
      State('session-1-signatures', 'data'),
      ]
 )
-def update_output(n_clicks, selected_signatures, selected_file, hide_heatmap, distance_metric, clustering_method, epsilon, signatures):
+def update_output(n_clicks, selected_file, hide_heatmap, selected_signatures, distance_metric, clustering_method, epsilon, signatures):
     if n_clicks:
         if signatures is not None:
             data = pd.DataFrame(signatures['signatures_data'])
@@ -404,12 +408,26 @@ import pandas as pd
 )
 def download_signatures_only(n_clicks, selected_signatures, selected_file, contents):
     if contents is not None:
-        # Dane z sesji
+        # data from session
         df_signatures = pd.DataFrame(contents['signatures_data'])
         df_signatures.index = df_signatures['Type']
         df_signatures = df_signatures.drop(columns='Type')[selected_signatures]
     else:
-        # Dane z pliku
+        # data from file
         df_signatures = pd.read_csv(f"data/signatures/{selected_file}", sep='\t', index_col=0)[selected_signatures]
 
     return dcc.send_data_frame(df_signatures.to_csv, filename="signatures.csv")
+
+@app.callback(
+    Output("submit-button", "color"),
+    Output("tooltip-button", "style"),
+    Input("signatures-dropdown-1", "value"),
+    Input("submit-button", "n_clicks"),
+    prevent_initial_call=True
+)
+def highlight_button_on_dropdown_change(dropdown_values, n_clicks):
+    if ctx.triggered_id == "signatures-dropdown-1":
+        return "danger", {"display": "block"}
+    elif ctx.triggered_id == "submit-button":
+        return "primary", {"display": "none"}
+    return dash.no_update, dash.no_update

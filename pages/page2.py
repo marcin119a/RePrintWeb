@@ -86,7 +86,9 @@ page2_layout = html.Div([
                             dbc.Tooltip(
                                 "Regenerate visualizations based on selected data",
                                 target="reload-button",
-                                placement="bottom"
+                                placement="bottom",
+                                id="tooltip-button-2",
+                                style={"display": "block"}
                             )
                         ],
                         width=2
@@ -400,3 +402,18 @@ def download_signatures_only_2(n_clicks, selected_signatures, selected_file, con
         df_signatures = pd.read_csv(f"data/signatures/{selected_file}", sep='\t', index_col=0)[selected_signatures]
 
     return dcc.send_data_frame(df_signatures.to_csv, filename="signatures.csv")
+
+@app.callback(
+    Output("reload-button", "color"),
+    Output("tooltip-button-2", "style"),
+    Input("signatures-dropdown-2", "value"),
+    Input("reload-button", "n_clicks"),
+    prevent_initial_call=True
+)
+def highlight_reload_button(signatures_selected, reload_clicks):
+    from dash import ctx
+    if ctx.triggered_id == "signatures-dropdown-2":
+        return "danger", {"display": "block"}
+    elif ctx.triggered_id == "reload-button":
+        return "success", {"display": "none"}
+    return dash.no_update, dash.no_update

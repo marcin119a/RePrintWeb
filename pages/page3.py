@@ -1,10 +1,11 @@
 from utils.figpanel import create_heatmap_with_custom_sim
-from utils.utils import linkage_methods, DEFAULT_LINKAGE_METHOD
+from utils.utils import linkage_methods, DEFAULT_LINKAGE_METHOD, reprint, calculate_rmse, calculate_cosine
 from main import app
 from dash import dcc, html, Input, Output, State
 import dash_bootstrap_components as dbc
 from pages.nav import navbar
 import pandas as pd
+
 
 # List of available files
 files = [
@@ -122,7 +123,6 @@ def update_signature_dropdown(selected_files):
         return options, list(common_signatures)
     return [], []
 
-from utils.utils import reprint, calculate_rmse, calculate_cosine
 
 @app.callback(
     [Output('form-output-3', 'children'),
@@ -145,8 +145,8 @@ def update_output(n_clicks, selected_files, selected_signatures, distance_metric
 
         return (
             f'Submitted: Distance Metric: {distance_metric}, Clustering Method: {clustering_method}, Epsilon: {epsilon}',
-            create_heatmap_with_custom_sim(combined_df, calc_func=functions[distance_metric], colorscale='BuPu', method=clustering_method),
-            create_heatmap_with_custom_sim(combined_reprint, calc_func=functions[distance_metric],  colorscale='Blues', method=clustering_method)
+            create_heatmap_with_custom_sim(combined_df, calc_func=functions[distance_metric], colorscale='YlGnBu', method=clustering_method),
+            create_heatmap_with_custom_sim(combined_reprint, calc_func=functions[distance_metric],  colorscale='OrRd', method=clustering_method)
         )
     return '', {}, {}
 

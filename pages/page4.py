@@ -1,28 +1,20 @@
 from utils.figpanel import create_main_dashboard
-from utils.utils import parse_signatures
 from dash import dcc, html
 from main import app
 from dash import Input, Output, State
 import dash_bootstrap_components as dbc
 from pages.nav import navbar
 import pandas as pd
+from utils.utils import FILES, DEFAULT_SIGNATURES, reprint, parse_signatures
 
-
-files = [
-    'COSMIC_v1_SBS_GRCh37.txt', 'COSMIC_v2_SBS_GRCh37.txt', 'COSMIC_v3.1_SBS_GRCh37.txt',
-    'COSMIC_v3.2_SBS_GRCh37.txt', 'COSMIC_v3.3.1_SBS_GRCh37.txt', 'COSMIC_v3.4_SBS_GRCh37.txt', 'COSMIC_v3_SBS_GRCh37.txt',
-    'COSMIC_v1_SBS_GRCh38.txt', 'COSMIC_v2_SBS_GRCh38.txt', 'COSMIC_v3.1_SBS_GRCh38.txt',
-    'COSMIC_v3.2_SBS_GRCh38.txt', 'COSMIC_v3.3.1_SBS_GRCh38.txt', 'COSMIC_v3.4_SBS_GRCh38.txt', 'COSMIC_v3_SBS_GRCh38.txt',
-    'transcribed.normalized.txt', 'untranscribed.normalized.txt'
-]
 
 
 data = {}
 
-for file in files:
+for file in FILES:
     data[file] = pd.read_csv(f'data/signatures/{file}', sep='\t').columns[1:].to_list()
 
-dropdown_options = [{'label': file, 'value': file} for file in files]
+dropdown_options = [{'label': file, 'value': file} for file in FILES]
 
 # Application layout
 page4_layout = html.Div([

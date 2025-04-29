@@ -128,17 +128,19 @@ page1_layout = html.Div([
                     ]),
                     dbc.Row([
                         dbc.Col([
-                            dbc.Label("Epsilon", html_for="epsilon"),
+                            dbc.Label("Epsilon (pseudo-count)", html_for="epsilon"),
                             dbc.Input(
                                 type="number",
                                 id="epsilon",
                                 placeholder="Enter epsilon value",
-                                value=10e-4,
-                                min=1e-10,  # Minimum value
-                                max=1e-2  # Maximum value
+                                value=1e-4,
+                                min=1e-10,
+                                max=1e-2
                             ),
+                            dbc.FormText(
+                                "Small pseudocount (ε) added to signature probabilities to reduce noise and avoid missing values due to rare mutations. Default: ε = 1e-4")
                         ])
-                    ]),
+                    ])
                 ])
             ])),
             id="collapse-form"
@@ -303,16 +305,16 @@ def update_output(n_clicks, selected_signatures, selected_file, hide_heatmap, di
             functions = {'rmse': calculate_rmse, 'cosine': calculate_cosine}
             df_reprint = reprint(data, epsilon=epsilon)
             return (f'Submitted: Distance Metric: {distance_metric}, Clustering Method: {clustering_method}, Epsilon: {epsilon}',
-                    create_heatmap_with_custom_sim(data, calc_func=functions[distance_metric], colorscale='BuPu', hide_heatmap=hide_heatmap, method=clustering_method),
-                    create_heatmap_with_custom_sim(df_reprint, calc_func=functions[distance_metric], colorscale='Blues', hide_heatmap=hide_heatmap, method=clustering_method)
+                    create_heatmap_with_custom_sim(data, calc_func=functions[distance_metric], colorscale='YlGnBu', hide_heatmap=hide_heatmap, method=clustering_method),
+                    create_heatmap_with_custom_sim(df_reprint, calc_func=functions[distance_metric], colorscale='OrRd', hide_heatmap=hide_heatmap, method=clustering_method)
                     )
         else:
             df_signatures = pd.read_csv(f"data/signatures/{selected_file}", sep='\t', index_col=0)[selected_signatures]
             functions = {'rmse': calculate_rmse, 'cosine': calculate_cosine}
             df_reprint = reprint(df_signatures, epsilon=epsilon)
             return (f'Submitted: Distance Metric: {distance_metric}, Clustering Method: {clustering_method}, Epsilon: {epsilon}',
-                    create_heatmap_with_custom_sim(df_signatures, calc_func=functions[distance_metric], colorscale='BuPu', hide_heatmap=hide_heatmap, method=clustering_method),
-                    create_heatmap_with_custom_sim(df_reprint, calc_func=functions[distance_metric], colorscale='Blues', hide_heatmap=hide_heatmap, method=clustering_method)
+                    create_heatmap_with_custom_sim(df_signatures, calc_func=functions[distance_metric], colorscale='YlGnBu', hide_heatmap=hide_heatmap, method=clustering_method),
+                    create_heatmap_with_custom_sim(df_reprint, calc_func=functions[distance_metric], colorscale='OrRd', hide_heatmap=hide_heatmap, method=clustering_method)
                     )
     else:
         if signatures is not None:
@@ -322,16 +324,16 @@ def update_output(n_clicks, selected_signatures, selected_file, hide_heatmap, di
             functions = {'rmse': calculate_rmse, 'cosine': calculate_cosine}
             df_reprint = reprint(data, epsilon=epsilon)
             return (f'Submitted: Distance Metric: {distance_metric}, Clustering Method: {clustering_method}, Epsilon: {epsilon}',
-                    create_heatmap_with_custom_sim(data, calc_func=functions[distance_metric], colorscale='BuPu', hide_heatmap=hide_heatmap, method=clustering_method),
-                    create_heatmap_with_custom_sim(df_reprint, calc_func=functions[distance_metric], colorscale='Blues', hide_heatmap=hide_heatmap, method=clustering_method)
+                    create_heatmap_with_custom_sim(data, calc_func=functions[distance_metric], colorscale='YlGnBu', hide_heatmap=hide_heatmap, method=clustering_method),
+                    create_heatmap_with_custom_sim(df_reprint, calc_func=functions[distance_metric], colorscale='OrRd', hide_heatmap=hide_heatmap, method=clustering_method)
                     )
         else:
             df_signatures = pd.read_csv(f"data/signatures/{selected_file}", sep='\t', index_col=0)[selected_signatures]
             df_reprint = pd.read_csv(f"data/cosmic_reprints/{selected_file}.reprint", sep='\t', index_col=0)[selected_signatures]
 
             return (f'Distance Metric: {distance_metric}, Clustering Method: {clustering_method}, Epsilon: {epsilon}',
-                    create_heatmap_with_custom_sim(df_signatures, colorscale='BuPu', hide_heatmap=hide_heatmap, method=clustering_method),
-                    create_heatmap_with_custom_sim(df_reprint, colorscale='Blues', hide_heatmap=hide_heatmap, method=clustering_method)
+                    create_heatmap_with_custom_sim(df_signatures, colorscale='YlGnBu', hide_heatmap=hide_heatmap, method=clustering_method),
+                    create_heatmap_with_custom_sim(df_reprint, colorscale='OrRd', hide_heatmap=hide_heatmap, method=clustering_method)
                     )
 
 @app.callback(

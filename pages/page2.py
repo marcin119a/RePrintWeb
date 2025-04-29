@@ -104,17 +104,19 @@ page2_layout = html.Div([
             dbc.Form([
                 dbc.Row([
                     dbc.Col([
-                        dbc.Label("Epsilon", html_for="epsilon-2"),
+                        dbc.Label("Epsilon (pseudo-count)", html_for="epsilon"),
                         dbc.Input(
                             type="number",
                             id="epsilon-2",
                             placeholder="Enter epsilon value",
-                            value=10e-4,
-                            min=1e-10,  # Minimum value
-                            max=1e-2  # Maximum value
+                            value=1e-4,
+                            min=1e-10,
+                            max=1e-2
                         ),
+                        dbc.FormText(
+                            "Small pseudocount (ε) added to signature probabilities to reduce noise and avoid missing values due to rare mutations. Default: ε = 1e-4")
                     ])
-                ]),
+                ])
             ])
         ])),
         id="collapse-form-2"
@@ -263,7 +265,7 @@ def update_graph(init_load, selected_file, n_clicks, current_page, selected_sign
                             figure=create_main_dashboard(
                                 df_reprint,
                                 signature=signature,
-                                title=f'{signature} Reprint - Probabilities of Specific Tri-nucleotide Context Mutations by Mutation Type',
+                                title=f'Reprint_{signature} - Probabilities of Specific Tri-nucleotide Context Mutations by Mutation Type',
                                 yaxis_title='Probabilites'
                             )
                         ), width=6

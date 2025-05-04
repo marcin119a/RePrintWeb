@@ -161,6 +161,67 @@ def create_heatmap_with_custom_sim(df, calc_func=calculate_rmse, colorscale='Blu
 
     return fig
 
+def create_vertical_dendrogram_with_query_labels_right(df, calc_func=calculate_rmse, method='complete'):
+    import pandas as pd
+    import plotly.figure_factory as ff
+    import plotly.graph_objects as go
+    from scipy.spatial.distance import pdist
+    from scipy.cluster.hierarchy import linkage
+
+    df = df.T
+    ref_df = df[df.index.str.endswith('_ref')]
+    query_df = df[df.index.str.endswith('_query')]
+
+    if ref_df.empty:
+        return go.Figure().update_layout(title="No _ref signatures available for dendrogram.")
+
+    ref_labels = ref_df.index.tolist()
+    query_labels = query_df.index.tolist()
+
+    dist_ref = pdist(ref_df.values, metric=lambda u, v: calc_func(pd.Series(u), pd.Series(v)))
+    Z = linkage(dist_ref, method=method)
+
+    similarity_map = {}
+    for query_name in query_labels:
+        query_vector = query_df.loc[query_name]
+        best_match = None
+        best_score = float('inf')
+        for ref_name in ref_labels:
+            score = calc_func(query_vector, ref_df.loc[ref_name])
+            if score < best_score:
+                best_score = score
+                best_match = ref_name
+        if best_match not in similarity_map:
+            similarity_map[best_match] = []
+        similarity_map[best_match].append(query_name)
+
+    fig = ff.create_dendrogram(ref_df.values, labels=ref_labels, orientation='left', linkagefun=lambda _: Z)
+    fig.for_each_trace(lambda trace: trace.update(visible=True))
+
+    ordered_refs = fig['layout']['yaxis']['ticktext']
+    updated_labels = []
+    for ref in ordered_refs:
+        if ref in similarity_map:
+            queries = similarity_map[ref]
+            label = ", ".join(queries) + " → " + ref
+        else:
+            label = ref
+        updated_labels.append(label)
+
+    fig.update_layout(
+        yaxis=dict(
+            ticktext=updated_labels,
+            tickvals=fig['layout']['yaxis']['tickvals'],
+            tickfont=dict(size=10)
+        ),
+        width=850,
+        height=max(400, 30 * len(updated_labels)),
+        margin=dict(l=50, r=350, t=40, b=40),
+        title="Dendrogram of _ref signatures with attached _query",
+        font=dict(size=10)
+    )
+
+    return fig
 
 
 def create_empty_figure_with_text(text):

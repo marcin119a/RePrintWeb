@@ -1,4 +1,3 @@
-from utils.figpanel import create_main_dashboard
 from utils.utils import parse_signatures
 from dash import dcc, html
 from main import app
@@ -96,11 +95,6 @@ page4_layout = html.Div([
             ])
         ]),
         dcc.Location(id='url-page4', refresh=False),
-        dcc.Loading(
-            id="loading-graphs",
-            type="default",
-            children=html.Div(id='plots-container-4')
-        )
     ], fluid=True)
 ])
 
@@ -109,8 +103,7 @@ from utils.utils import reprint
 
 
 @app.callback(
-    [Output('plots-container-4', 'children'),
-     Output('heatmap-plot-4', 'figure'),
+    [Output('heatmap-plot-4', 'figure'),
      Output('heatmap-reprint-plot-4', 'figure')],
     [Input('initial-load', 'n_intervals'),
      Input('dropdown-4', 'value'),
@@ -128,82 +121,55 @@ def update_graph(init_load, selected_file, n_clicks, selected_signatures, signat
 
     if trigger_id == 'initial-load' or trigger_id == 'reload-button':
         if not selected_signatures or not selected_file:
-            return [], {}, {}
+            return {}, {}
         if signatures is not None:
-            df_signatures = pd.DataFrame(signatures['signatures_data'])
-            df_signatures.index = df_signatures['Type']
-            df_signatures = df_signatures.drop(columns='Type')
+            df_signatures = pd.DataFrame(signatures[0]['signatures_data'])
+            df_signatures.set_index('Type', inplace=True)
+
+            df_reprint_all = reprint(df_signatures, epsilon=0.0001)
+
+            df_reprint = df_reprint_all[[col for col in selected_signatures if col in df_reprint_all.columns]]
+        else:
+            df_signatures = pd.read_csv(f"data/signatures/{selected_file}", sep='\t', index_col=0)
+            df_signatures.columns = [f"{c}_ref" for c in df_signatures.columns]
+
+            df_signatures = df_signatures[selected_signatures]
             df_reprint = reprint(df_signatures, epsilon=0.0001)[selected_signatures]
 
-        else:
-            df_signatures = pd.read_csv(f"data/signatures/{selected_file}", sep='\t', index_col=0)[selected_signatures]
-            df_reprint = pd.read_csv(f"data/cosmic_reprints/{selected_file}.reprint", sep='\t', index_col=0)[
-                selected_signatures]
-
-        plots = []
-        for signature in selected_signatures:
-            plots.append(
-                dbc.Row([
-                    dbc.Col(
-                        dcc.Graph(
-                            figure=create_main_dashboard(
-                                df_signatures,
-                                signature=signature,
-                                title=f'{signature} Frequency of Specific Tri-nucleotide Context Mutations by Mutation Type',
-                                yaxis_title='Frequencies'
-                            )
-                        ), width=6
-                    ),
-                    dbc.Col(
-                        dcc.Graph(
-                            figure=create_main_dashboard(
-                                df_reprint,
-                                signature=signature,
-                                title=f'{signature} Reprint - Probabilities of Specific Tri-nucleotide Context Mutations by Mutation Type',
-                                yaxis_title='Probabilities'
-                            )
-                        ), width=6
-                    )
-                ])
-            )
-        from utils.figpanel import create_heatmap_with_custom_sim
-        return plots, create_heatmap_with_custom_sim(df_signatures), create_heatmap_with_custom_sim(df_reprint)
+        from utils.figpanel import create_vertical_dendrogram_with_query_labels_right
+        return create_vertical_dendrogram_with_query_labels_right(df_signatures), create_vertical_dendrogram_with_query_labels_right(df_reprint)
     else:
-        return [], {}, {}
+        return {}, {}
 
 
 @app.callback(
-    [Output('session-4-signatures', 'data')],
-    [Input('upload-data-4-signatures', 'contents')],
-    [State('upload-data-4-signatures', 'filename'),
-     State('session-4-signatures', 'data')]
+    Output('session-4-signatures', 'data'),
+    Input('upload-data-4-signatures', 'contents'),
+    State('upload-data-4-signatures', 'filename'),
+    State('dropdown-4', 'value')  # dodajemy nazwę pliku bazowego
 )
-def update_output_signatures(contents, filename, existing_data):
-    if contents is not None:
-        new_df_signatures = parse_signatures(contents, filename)
+def update_output_signatures(contents, filename, selected_file):
+    if contents is None:
+        return dash.no_update
 
-        if existing_data is not None:
-            existing_df = pd.DataFrame(existing_data['signatures_data'])
+    df_ref = pd.read_csv(f"data/signatures/{selected_file}", sep='\t')
+    df_ref = df_ref.rename(columns={col: f"{col}_ref" for col in df_ref.columns if col != 'Type'})
+    df_ref.set_index('Type', inplace=True)
 
-            if 'Type' in existing_df.columns:
-                existing_df.index = existing_df['Type']
-                existing_df = existing_df.drop(columns='Type')
+    df_query = parse_signatures(contents, filename)
+    if 'Type' in df_query.columns:
+        df_query.set_index('Type', inplace=True)
+    df_query = df_query.rename(columns={col: f"{col}_query" for col in df_query.columns})
 
-            merged_df = pd.merge(
-                existing_df,
-                new_df_signatures,
-                on='Type',
-                how='inner',
-                suffixes=('_ref', '_query')
-            )
-            merged_df.index = merged_df['Type']
-        else:
-            merged_df = new_df_signatures
+    # Merge
+    merged = df_ref.join(df_query, how='inner')
+    merged.reset_index(inplace=True)
 
-        signatures_info = f"Updated signatures with {filename}"
-        return [{'signatures_data': merged_df.to_dict('records'), 'filename': filename, 'info': signatures_info}]
-
-    return dash.no_update
+    return [{
+        'signatures_data': merged.to_dict('records'),
+        'filename': filename,
+        'info': f'Merged base: {selected_file} with upload: {filename}'
+    }]
 
 
 @app.callback(
@@ -215,27 +181,30 @@ def update_output_signatures(contents, filename, existing_data):
      Input('session-4-signatures', 'data')],
 )
 def set_options(selected_category, contents):
+    base_signatures = data[selected_category]
+
     if contents is not None:
-        df = pd.DataFrame(contents['signatures_data'])
-
+        content = contents[0]  # bo contents to lista z jednym słownikiem
+        df = pd.DataFrame(content['signatures_data'])
         if 'Type' in df.columns:
-            df.index = df['Type']
-            df = df.drop(columns='Type')
+            df.set_index('Type', inplace=True)
 
-        uploaded_signatures = df.columns.to_list()
+        all_columns = df.columns.tolist()
+        ref_cols = sorted([col for col in all_columns if col.endswith('_ref')])
+        query_cols = sorted([col for col in all_columns if col.endswith('_query')])
+
+        combined = ref_cols + query_cols
 
         return (
-            [{'label': signature, 'value': signature} for signature in uploaded_signatures],
-            uploaded_signatures,
+            [{'label': sig, 'value': sig} for sig in combined],
+            combined,
             {'display': 'None'},
-            f'Added your signatures from {contents["filename"]}'
+            f'Merged {selected_category} with uploaded file'
         )
 
-    # Jeśli nie ma uploadu – wczytaj z pliku
-    signatures = data[selected_category]
     return (
-        [{'label': s, 'value': s} for s in signatures],
-        signatures,
+        [{'label': f"{s}_ref", 'value': f"{s}_ref"} for s in base_signatures],
+        [f"{s}_ref" for s in base_signatures],
         {'display': 'block'},
         'Not Uploaded'
     )

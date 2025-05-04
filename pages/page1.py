@@ -291,16 +291,16 @@ def toggle_collapse(n, is_open):
      Output('heatmap-plot', 'figure'),
      Output('heatmap-reprint-plot', 'figure')],
     [Input('submit-button', 'n_clicks'),
-     Input('dropdown-1', 'value'),
      Input("toggle-heatmap", "value")],
-    [State('signatures-dropdown-1', 'value'),
+    [State('dropdown-1', 'value'),
+     State('signatures-dropdown-1', 'value'),
      State('distance-metric', 'value'),
      State('clustering-method', 'value'),
      State('epsilon', 'value'),
      State('session-1-signatures', 'data'),
      ]
 )
-def update_output(n_clicks, selected_file, hide_heatmap, selected_signatures, distance_metric, clustering_method, epsilon, signatures):
+def update_output(n_clicks, hide_heatmap, selected_file, selected_signatures, distance_metric, clustering_method, epsilon, signatures):
     if n_clicks:
         if signatures is not None:
             data = pd.DataFrame(signatures['signatures_data'])
@@ -329,7 +329,7 @@ def update_output(n_clicks, selected_file, hide_heatmap, selected_signatures, di
             df_reprint = reprint(data, epsilon=epsilon)
             return (f'Submitted: Distance Metric: {distance_metric}, Clustering Method: {clustering_method}, Epsilon: {epsilon}',
                     create_heatmap_with_custom_sim(data, calc_func=functions[distance_metric], colorscale='YlGnBu', hide_heatmap=hide_heatmap, method=clustering_method),
-                    create_heatmap_with_custom_sim(df_reprint, calc_func=functions[distance_metric], colorscale='OrRd', hide_heatmap=hide_heatmap, method=clustering_method)
+                    create_heatmap_with_custom_sim(data, calc_func=functions[distance_metric], colorscale='OrRd', hide_heatmap=hide_heatmap, method=clustering_method)
                     )
         else:
             df_signatures = pd.read_csv(f"data/signatures/{selected_file}", sep='\t', index_col=0)[selected_signatures]

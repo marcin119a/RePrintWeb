@@ -123,7 +123,10 @@ def update_graph(init_load, selected_file, n_clicks, selected_signatures, signat
         if not selected_signatures or not selected_file:
             return {}, {}
         if signatures is not None:
-            df_signatures = pd.DataFrame(signatures[0]['signatures_data'])
+            if isinstance(signatures, list):
+                df_signatures = pd.DataFrame(signatures[0]['signatures_data'])
+            else:
+                df_signatures = pd.DataFrame(signatures['signatures_data'])
             df_signatures.set_index('Type', inplace=True)
 
             df_reprint_all = reprint(df_signatures, epsilon=0.0001)
@@ -184,7 +187,12 @@ def set_options(selected_category, contents):
     base_signatures = data[selected_category]
 
     if contents is not None:
-        content = contents[0]  # bo contents to lista z jednym słownikiem
+        # jeśli to lista, wyciągnij pierwszy element (np. z poprzedniej wersji callbacku)
+        if isinstance(contents, list):
+            content = contents[0]
+        else:
+            content = contents
+
         df = pd.DataFrame(content['signatures_data'])
         if 'Type' in df.columns:
             df.set_index('Type', inplace=True)
@@ -199,9 +207,10 @@ def set_options(selected_category, contents):
             [{'label': sig, 'value': sig} for sig in combined],
             combined,
             {'display': 'None'},
-            f'Merged {selected_category} with uploaded file'
+            content.get('info', f'Merged {selected_category} with uploaded file')
         )
 
+    # fallback – tylko ref z pliku
     return (
         [{'label': f"{s}_ref", 'value': f"{s}_ref"} for s in base_signatures],
         [f"{s}_ref" for s in base_signatures],

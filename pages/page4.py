@@ -5,23 +5,15 @@ from dash import Input, Output, State
 import dash_bootstrap_components as dbc
 from pages.nav import navbar
 import pandas as pd
+from utils.utils import FILES, DEFAULT_SIGNATURES
 
-files = [
-    'COSMIC_v1_SBS_GRCh37.txt', 'COSMIC_v2_SBS_GRCh37.txt', 'COSMIC_v3.1_SBS_GRCh37.txt',
-    'COSMIC_v3.2_SBS_GRCh37.txt', 'COSMIC_v3.3.1_SBS_GRCh37.txt', 'COSMIC_v3.4_SBS_GRCh37.txt',
-    'COSMIC_v3_SBS_GRCh37.txt',
-    'COSMIC_v1_SBS_GRCh38.txt', 'COSMIC_v2_SBS_GRCh38.txt', 'COSMIC_v3.1_SBS_GRCh38.txt',
-    'COSMIC_v3.2_SBS_GRCh38.txt', 'COSMIC_v3.3.1_SBS_GRCh38.txt', 'COSMIC_v3.4_SBS_GRCh38.txt',
-    'COSMIC_v3_SBS_GRCh38.txt',
-    'transcribed.normalized.txt', 'untranscribed.normalized.txt'
-]
 
 data = {}
 
-for file in files:
+for file in FILES:
     data[file] = pd.read_csv(f'data/signatures/{file}', sep='\t').columns[1:].to_list()
 
-dropdown_options = [{'label': file, 'value': file} for file in files]
+dropdown_options = [{'label': file, 'value': file} for file in FILES]
 
 # Application layout
 page4_layout = html.Div([
@@ -33,13 +25,13 @@ page4_layout = html.Div([
                 id='dropdown-4',
                 options=dropdown_options,
                 disabled=False,
-                value='COSMIC_v2_SBS_GRCh37.txt'
+                value=DEFAULT_SIGNATURES
             ),
             dcc.Dropdown(
                 id='signatures-dropdown-4',
                 options=[{'label': k, 'value': k} for k in data.keys()],
                 multi=True,
-                value=[k for k in data['COSMIC_v2_SBS_GRCh37.txt']],
+                value=[k for k in data[DEFAULT_SIGNATURES]],
             ),
         ]),
         dcc.Upload(

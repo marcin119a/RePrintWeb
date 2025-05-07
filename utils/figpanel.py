@@ -95,6 +95,7 @@ def create_heatmap_with_custom_sim(df, calc_func=calculate_rmse, colorscale='Blu
                 x=dendro_leaves,
                 y=dendro_leaves,
                 z=heat_data,
+                reversescale=True,
                 colorscale=colorscale,
                 colorbar=dict(
                     x=1.2,

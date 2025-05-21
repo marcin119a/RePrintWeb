@@ -132,6 +132,7 @@ def update_graph(init_load, selected_file, n_clicks, selected_signatures, signat
             df_reprint_all = reprint(df_signatures, epsilon=0.0001)
 
             df_reprint = df_reprint_all[[col for col in selected_signatures if col in df_reprint_all.columns]]
+            df_signatures = df_signatures[[col for col in selected_signatures if col in df_signatures.columns]]
         else:
             df_signatures = pd.read_csv(f"data/signatures/{selected_file}", sep='\t', index_col=0)
             df_signatures.columns = [f"{c}_ref" for c in df_signatures.columns]

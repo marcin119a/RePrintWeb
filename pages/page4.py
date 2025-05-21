@@ -141,7 +141,7 @@ def update_graph(init_load, selected_file, n_clicks, selected_signatures, signat
             df_reprint = reprint(df_signatures, epsilon=0.0001)[selected_signatures]
 
         from utils.figpanel import create_vertical_dendrogram_with_query_labels_right
-        return create_vertical_dendrogram_with_query_labels_right(df_signatures), create_vertical_dendrogram_with_query_labels_right(df_reprint)
+        return create_vertical_dendrogram_with_query_labels_right(df_signatures, text="Dendrogram of _ref signatures with attached _query"), create_vertical_dendrogram_with_query_labels_right(df_reprint,  text="Dendrogram of _ref reprints with attached _query")
     else:
         return {}, {}
 

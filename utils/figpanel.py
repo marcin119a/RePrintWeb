@@ -162,7 +162,7 @@ def create_heatmap_with_custom_sim(df, calc_func=calculate_rmse, colorscale='Blu
 
     return fig
 
-def create_vertical_dendrogram_with_query_labels_right(df, calc_func=calculate_rmse, method='complete'):
+def create_vertical_dendrogram_with_query_labels_right(df, calc_func=calculate_rmse, method='complete', text=''):
     import pandas as pd
     import plotly.figure_factory as ff
     import plotly.graph_objects as go
@@ -218,7 +218,7 @@ def create_vertical_dendrogram_with_query_labels_right(df, calc_func=calculate_r
         width=1200,
         height=max(400, 30 * len(updated_labels)),
         margin=dict(l=50, r=350, t=40, b=40),
-        title="Dendrogram of _ref signatures with attached _query",
+        title=text,
         font=dict(size=10)
     )
 

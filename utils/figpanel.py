@@ -215,7 +215,7 @@ def create_vertical_dendrogram_with_query_labels_right(df, calc_func=calculate_r
             tickvals=fig['layout']['yaxis']['tickvals'],
             tickfont=dict(size=10)
         ),
-        width=850,
+        width=1200,
         height=max(400, 30 * len(updated_labels)),
         margin=dict(l=50, r=350, t=40, b=40),
         title="Dendrogram of _ref signatures with attached _query",

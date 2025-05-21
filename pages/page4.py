@@ -79,11 +79,19 @@ page4_layout = html.Div([
         dbc.Row([
             dbc.Col([
                 html.H5("Signature similarity"),
-                dcc.Graph(id='heatmap-plot-4')
+                dcc.Loading(
+                    id="loading-heatmap-4",
+                    type="default",
+                    children=dcc.Graph(id='heatmap-plot-4')
+                )
             ]),
             dbc.Col([
                 html.H5("RePrint similarity"),
-                dcc.Graph(id='heatmap-reprint-plot-4')
+                dcc.Loading(
+                    id="loading-reprint-4",
+                    type="default",
+                    children=dcc.Graph(id='heatmap-reprint-plot-4')
+                )
             ])
         ]),
         dcc.Location(id='url-page4', refresh=False),
@@ -179,7 +187,6 @@ def set_options(selected_category, contents):
     base_signatures = data[selected_category]
 
     if contents is not None:
-        # jeśli to lista, wyciągnij pierwszy element (np. z poprzedniej wersji callbacku)
         if isinstance(contents, list):
             content = contents[0]
         else:
@@ -202,7 +209,6 @@ def set_options(selected_category, contents):
             content.get('info', f'Merged {selected_category} with uploaded file')
         )
 
-    # fallback – tylko ref z pliku
     return (
         [{'label': f"{s}_ref", 'value': f"{s}_ref"} for s in base_signatures],
         [f"{s}_ref" for s in base_signatures],

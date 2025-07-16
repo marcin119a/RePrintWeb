@@ -19,6 +19,47 @@ dropdown_options = [{'label': file, 'value': file} for file in FILES]
 # Application layout
 page2_layout = html.Div([
     navbar,
+dbc.Alert(
+    [
+        html.H5("How to Use This Dashboard", className="mb-3"),
+
+        html.H6("Workflow", className="mt-2"),
+        html.Ol([
+            html.Li("Choose a reference signature file from the first dropdown (e.g., COSMIC)."),
+            html.Li("Optionally upload your own mutational signatures (.txt format)."),
+            html.Li("Select the signatures to visualize from the second dropdown."),
+        ], style={"font-size": "15px"}),
+
+        html.Div("The plots will NOT update automatically. You must click 'Generate Plots' to refresh visualizations.", style={"color": "black", "font-weight": "bold"}),
+
+        html.H6("Plot Display", className="mt-4"),
+        html.P("For each selected signature, two side-by-side bar charts are displayed:", style={"font-size": "15px"}),
+        html.Ul([
+            html.Li("Left: Original signature (mutation frequencies)", style={"font-size": "14px"}),
+            html.Li("Right: RePrint-transformed representation (functional footprint)", style={"font-size": "14px"}),
+        ]),
+        html.P("Use the navigation buttons at the bottom to browse through paginated results (5 plots per page).", style={"font-size": "15px"}),
+
+        html.H6("Advanced Options", className="mt-4"),
+        html.P("You can optionally adjust the epsilon (ε) parameter using the 'Advanced Options' toggle. "
+               "This value is added to frequencies to reduce noise and avoid zero values.", style={"font-size": "15px"}),
+
+        html.H6(" Downloads", className="mt-4"),
+        html.Ul([
+            html.Li("Download transformed RePrint data as CSV", style={"font-size": "14px"}),
+            html.Li("Download selected raw signature data", style={"font-size": "14px"}),
+        ]),
+    ],
+    color="secondary",
+    dismissable=True,
+    style={
+        "margin-top": "25px",
+        "font-size": "15px",
+        "background-color": "#f8f9fa",
+        "border": "1px solid #ced4da",
+        "padding": "20px"
+    }
+),
     dcc.Interval(id='initial-load', interval=1000, n_intervals=0, max_intervals=1),
     dbc.Container([
     dbc.Card(

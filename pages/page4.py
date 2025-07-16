@@ -22,6 +22,53 @@ dropdown_options = [{'label': file, 'value': file} for file in FILES]
 page4_layout = html.Div([
     navbar,
     dcc.Interval(id='initial-load', interval=1000, n_intervals=0, max_intervals=1),
+    dbc.Alert(
+        [
+            html.H5("Reference Base vs Query Signatures",
+                    style={"font-weight": "bold", "margin-bottom": "10px"}),
+
+            html.H6("Reference Base (_ref)", style={"font-weight": "bold"}),
+            html.P(
+                "The reference base is a collection of predefined mutational signatures that serve as a benchmark for comparison. "
+                "Examples include well-established datasets such as COSMIC (Catalogue Of Somatic Mutations In Cancer)"
+                "You can select the reference base from the first dropdown menu."
+            ),
+            html.P(
+                "Each column in the reference file represents a known signature (e.g., SBS1, SBS2), and each row corresponds to a mutation type "
+                "(e.g., A[C>A]G, A[C>T]A)."
+            ),
+            html.P(
+                "In the analysis, reference columns are marked with a '_ref' suffix."
+            ),
+
+            html.H6("Query Signatures (_query)", style={"font-weight": "bold", "margin-top": "15px"}),
+            html.P(
+                "Query signatures are the data that you provide — for example, newly obtained mutational signatures from your own study or experiments. "
+                "You can upload them using the file upload component on the dashboard."
+            ),
+            html.P(
+                "Uploaded data will be automatically aligned with the reference base using the mutation types (Type column). "
+                "Each uploaded signature will be labeled with a '_query' suffix."
+            ),
+            html.P(
+                "This allows you to:",
+                style={"margin-bottom": "5px"}
+            ),
+            html.Ul([
+                html.Li("Evaluate similarity to known reference signatures", style={"font-size": "14px"}),
+                html.Li("Visualize clustering relationships (e.g., dendrograms)", style={"font-size": "14px"}),
+                html.Li("Detect novel or unexpected mutational patterns", style={"font-size": "14px"}),
+            ]),
+
+            html.P(
+                "In short, you can use your uploaded query signatures to 'ask a question' of the reference base — "
+                "e.g., “Which known signature is most similar to my experimental sample?”"
+            )
+        ],
+        color="secondary",
+        style={"margin-top": "20px", "font-size": "15px", "background-color": "#f8f9fa", "border": "1px solid #ced4da"},
+        dismissable=True
+    ),
     dbc.Container([
         dbc.Collapse(
             dbc.Card(dbc.CardBody([

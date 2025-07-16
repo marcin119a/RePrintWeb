@@ -19,6 +19,34 @@ dropdown_options = [{'label': file, 'value': file} for file in FILES]
 # Application layout
 page1_layout = html.Div([
     navbar,
+    dbc.Alert(
+        [
+            html.H5("How to Use This Dashboard", className="mb-3"),
+
+            html.H6("1. Workflow Steps", className="mt-2"),
+            html.Ol([
+                html.Li("Select a reference signature file from the first dropdown (e.g., COSMIC)."),
+                html.Li("Optionally upload your own query signatures using the drag-and-drop box."),
+                html.Li("Adjust advanced options (distance metric, clustering, epsilon), if needed."),
+                html.Li([
+                    html.Strong("Click "), "the ",
+                    html.Strong("Reload heatmaps"),
+                    " button to generate the analysis and update the plots."
+                ])
+            ], style={"font-size": "15px"}),
+
+
+            html.H6("Downloads", className="mt-4"),
+            html.Ul([
+                html.Li("Download RePrint matrix as CSV", style={"font-size": "14px"}),
+                html.Li("Download original signature matrix", style={"font-size": "14px"}),
+            ])
+        ],
+        color="secondary",
+        dismissable=True,
+        style={"margin-top": "25px", "font-size": "15px", "background-color": "#f8f9fa",
+               "border": "1px solid #ced4da", "padding": "20px"}
+    ),
     dbc.Container([
         dbc.Card(
             [

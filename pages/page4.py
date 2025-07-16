@@ -5,9 +5,12 @@ from dash import Input, Output, State
 import dash_bootstrap_components as dbc
 from pages.nav import navbar
 import pandas as pd
-from utils.utils import FILES, DEFAULT_SIGNATURES
+from utils.utils import FILES, DEFAULT_SIGNATURES, calculate_rmse, calculate_cosine
 
+functions = {'rmse': calculate_rmse, 'cosine': calculate_cosine}
 
+DEFAULT_LINKAGE_METHOD = 'complete'
+linkage_methods = ['single', 'complete', 'average', 'weighted', 'centroid', 'median']
 data = {}
 
 for file in FILES:
@@ -20,6 +23,54 @@ page4_layout = html.Div([
     navbar,
     dcc.Interval(id='initial-load', interval=1000, n_intervals=0, max_intervals=1),
     dbc.Container([
+        dbc.Collapse(
+            dbc.Card(dbc.CardBody([
+                dbc.Form([
+                    dbc.Row([
+                        dbc.Col([
+                            dbc.Label("Distance Metric", html_for="distance-metric-4"),
+                            dcc.Dropdown(
+                                id='distance-metric-4',
+                                options=[
+                                    {'label': 'Cosine', 'value': 'cosine'},
+                                    {'label': 'RMSE', 'value': 'rmse'}
+                                ],
+                                placeholder="Select distance metric",
+                                value='rmse',
+                            ),
+                        ])
+                    ]),
+                    dbc.Row([
+                        dbc.Col([
+                            dbc.Label("Clustering Method", html_for="clustering-method-4"),
+                            dcc.Dropdown(
+                                id='clustering-method-4',
+                                options=[{'label': method.title(), 'value': method} for method in linkage_methods],
+                                placeholder="Select clustering method",
+                                value=DEFAULT_LINKAGE_METHOD,
+                                clearable=False,
+                            ),
+                        ])
+                    ]),
+                    dbc.Row([
+                        dbc.Col([
+                            dbc.Label("Epsilon (pseudo-count)", html_for="epsilon-4"),
+                            dbc.Input(
+                                type="number",
+                                id="epsilon-4",
+                                placeholder="Enter epsilon value",
+                                value=1e-4,
+                                min=1e-10,
+                                max=1e-2
+                            ),
+                            dbc.FormText(
+                                "Small pseudocount (ε) added to signature probabilities to reduce noise and avoid missing values due to rare mutations. Default: ε = 1e-4")
+                        ])
+                    ])
+                ])
+            ])),
+            id="collapse-form-4"
+        ),
         dbc.Row([
             dcc.Dropdown(
                 id='dropdown-4',
@@ -75,7 +126,23 @@ page4_layout = html.Div([
             dismissable=True,
             style={"font-size": "14px", "padding": "10px"}),
         dcc.Store(id='session-4-signatures', storage_type='session', data=None),
-        dbc.Button("Generate plots", id="reload-button", className="ms-2"),
+        dbc.CardBody(
+                    dbc.Row(
+                        [
+                            dbc.Col(
+                                dbc.Button("Generate plots", id="reload-button", className="ms-2"),
+                            ),
+                            dbc.Col(
+                                dbc.Button(
+                                    "Advanced Options",
+                                    id="toggle-button-4",
+                                    color="dark",
+                                    className="ms-2"
+                                ),
+                            )
+                        ]
+                    )
+        ),
         dbc.Row([
             dbc.Col([
                 html.H5("Signature similarity"),
@@ -109,9 +176,12 @@ from utils.utils import reprint
      Input('dropdown-4', 'value'),
      Input('reload-button', 'n_clicks')],
     [State('signatures-dropdown-4', 'value'),
-     State('session-4-signatures', 'data')]
+     State('session-4-signatures', 'data'),
+     State('distance-metric-4', 'value'),
+     State('clustering-method-4', 'value'),
+     State('epsilon-4', 'value')]
 )
-def update_graph(init_load, selected_file, n_clicks, selected_signatures, signatures):
+def update_graph(init_load, selected_file, n_clicks, selected_signatures, signatures, distance_metric, clustering_method, epsilon):
     ctx = dash.callback_context
 
     if not ctx.triggered:
@@ -129,7 +199,7 @@ def update_graph(init_load, selected_file, n_clicks, selected_signatures, signat
                 df_signatures = pd.DataFrame(signatures['signatures_data'])
             df_signatures.set_index('Type', inplace=True)
 
-            df_reprint_all = reprint(df_signatures, epsilon=0.0001)
+            df_reprint_all = reprint(df_signatures, epsilon=epsilon)
 
             df_reprint = df_reprint_all[[col for col in selected_signatures if col in df_reprint_all.columns]]
             df_signatures = df_signatures[[col for col in selected_signatures if col in df_signatures.columns]]
@@ -138,10 +208,11 @@ def update_graph(init_load, selected_file, n_clicks, selected_signatures, signat
             df_signatures.columns = [f"{c}_ref" for c in df_signatures.columns]
 
             df_signatures = df_signatures[selected_signatures]
-            df_reprint = reprint(df_signatures, epsilon=0.0001)[selected_signatures]
+            df_reprint = reprint(df_signatures, epsilon=epsilon)[selected_signatures]
 
         from utils.figpanel import create_vertical_dendrogram_with_query_labels_right
-        return create_vertical_dendrogram_with_query_labels_right(df_signatures, text="Dendrogram of _ref signatures with attached _query"), create_vertical_dendrogram_with_query_labels_right(df_reprint,  text="Dendrogram of _ref reprints with attached _query")
+        return (create_vertical_dendrogram_with_query_labels_right(df_signatures, calc_func=functions[distance_metric], method=clustering_method, text="Dendrogram of _ref signatures with attached _query"),
+                create_vertical_dendrogram_with_query_labels_right(df_reprint,   calc_func=functions[distance_metric], method=clustering_method,  text="Dendrogram of _ref reprints with attached _query"))
     else:
         return {}, {}
 
@@ -216,3 +287,13 @@ def set_options(selected_category, contents):
         {'display': 'block'},
         'Not Uploaded'
     )
+
+@app.callback(
+    Output("collapse-form-4", "is_open"),
+    [Input("toggle-button-4", "n_clicks")],
+    [State("collapse-form-4", "is_open")],
+)
+def toggle_collapse(n, is_open):
+    if n:
+        return not is_open
+    return is_open

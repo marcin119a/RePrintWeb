@@ -70,54 +70,6 @@ page4_layout = html.Div([
         dismissable=True
     ),
     dbc.Container([
-        dbc.Collapse(
-            dbc.Card(dbc.CardBody([
-                dbc.Form([
-                    dbc.Row([
-                        dbc.Col([
-                            dbc.Label("Distance Metric", html_for="distance-metric-4"),
-                            dcc.Dropdown(
-                                id='distance-metric-4',
-                                options=[
-                                    {'label': 'Cosine', 'value': 'cosine'},
-                                    {'label': 'RMSE', 'value': 'rmse'}
-                                ],
-                                placeholder="Select distance metric",
-                                value='rmse',
-                            ),
-                        ])
-                    ]),
-                    dbc.Row([
-                        dbc.Col([
-                            dbc.Label("Clustering Method", html_for="clustering-method-4"),
-                            dcc.Dropdown(
-                                id='clustering-method-4',
-                                options=[{'label': method.title(), 'value': method} for method in linkage_methods],
-                                placeholder="Select clustering method",
-                                value=DEFAULT_LINKAGE_METHOD,
-                                clearable=False,
-                            ),
-                        ])
-                    ]),
-                    dbc.Row([
-                        dbc.Col([
-                            dbc.Label("Epsilon (pseudo-count)", html_for="epsilon-4"),
-                            dbc.Input(
-                                type="number",
-                                id="epsilon-4",
-                                placeholder="Enter epsilon value",
-                                value=1e-4,
-                                min=1e-10,
-                                max=1e-2
-                            ),
-                            dbc.FormText(
-                                "Small pseudocount (ε) added to signature probabilities to reduce noise and avoid missing values due to rare mutations. Default: ε = 1e-4")
-                        ])
-                    ])
-                ])
-            ])),
-            id="collapse-form-4"
-        ),
         dbc.Row([
             dcc.Dropdown(
                 id='dropdown-4',
@@ -173,6 +125,54 @@ page4_layout = html.Div([
             dismissable=True,
             style={"font-size": "14px", "padding": "10px"}),
         dcc.Store(id='session-4-signatures', storage_type='session', data=None),
+dbc.Collapse(
+            dbc.Card(dbc.CardBody([
+                dbc.Form([
+                    dbc.Row([
+                        dbc.Col([
+                            dbc.Label("Distance Metric", html_for="distance-metric-4"),
+                            dcc.Dropdown(
+                                id='distance-metric-4',
+                                options=[
+                                    {'label': 'Cosine', 'value': 'cosine'},
+                                    {'label': 'RMSE', 'value': 'rmse'}
+                                ],
+                                placeholder="Select distance metric",
+                                value='rmse',
+                            ),
+                        ])
+                    ]),
+                    dbc.Row([
+                        dbc.Col([
+                            dbc.Label("Clustering Method", html_for="clustering-method-4"),
+                            dcc.Dropdown(
+                                id='clustering-method-4',
+                                options=[{'label': method.title(), 'value': method} for method in linkage_methods],
+                                placeholder="Select clustering method",
+                                value=DEFAULT_LINKAGE_METHOD,
+                                clearable=False,
+                            ),
+                        ])
+                    ]),
+                    dbc.Row([
+                        dbc.Col([
+                            dbc.Label("Epsilon (pseudo-count)", html_for="epsilon-4"),
+                            dbc.Input(
+                                type="number",
+                                id="epsilon-4",
+                                placeholder="Enter epsilon value",
+                                value=1e-4,
+                                min=1e-10,
+                                max=1e-2
+                            ),
+                            dbc.FormText(
+                                "Small pseudocount (ε) added to signature probabilities to reduce noise and avoid missing values due to rare mutations. Default: ε = 1e-4")
+                        ])
+                    ])
+                ])
+            ])),
+            id="collapse-form-4"
+        ),
         dbc.CardBody(
                     dbc.Row(
                         [
@@ -184,6 +184,14 @@ page4_layout = html.Div([
                                     "Advanced Options",
                                     id="toggle-button-4",
                                     color="dark",
+                                    className="ms-2"
+                                ),
+                            ),
+                            dbc.Col(
+                                dbc.Button(
+                                    "Clear Upload",
+                                    id="clear-upload-btn-4",
+                                    color="danger",
                                     className="ms-2"
                                 ),
                             )
@@ -267,12 +275,26 @@ def update_graph(init_load, selected_file, n_clicks, selected_signatures, signat
 @app.callback(
     Output('session-4-signatures', 'data'),
     Input('upload-data-4-signatures', 'contents'),
+    Input('clear-upload-btn-4', 'n_clicks'),
     State('upload-data-4-signatures', 'filename'),
     State('dropdown-4', 'value')  # dodajemy nazwę pliku bazowego
 )
-def update_output_signatures(contents, filename, selected_file):
+def update_output_signatures(contents, click,  filename, selected_file):
     if contents is None:
         return dash.no_update
+
+    ctx = dash.callback_context
+    trigger_id = ctx.triggered[0]['prop_id'].split('.')[0]
+    print(trigger_id)
+    if trigger_id == 'clear-upload-btn-4':
+        df_ref = pd.read_csv(f"data/signatures/{selected_file}", sep='\t')
+        df_ref = df_ref.rename(columns={col: f"{col}_ref" for col in df_ref.columns if col != 'Type'})
+
+        return [{
+            'signatures_data': df_ref.to_dict('records'),
+            'filename': None,
+            'info': f'Cleaned {selected_file} '
+        }]
 
     df_ref = pd.read_csv(f"data/signatures/{selected_file}", sep='\t')
     df_ref = df_ref.rename(columns={col: f"{col}_ref" for col in df_ref.columns if col != 'Type'})
@@ -304,7 +326,6 @@ def update_output_signatures(contents, filename, selected_file):
 )
 def set_options(selected_category, contents):
     base_signatures = data[selected_category]
-
     if contents is not None:
         if isinstance(contents, list):
             content = contents[0]
@@ -324,7 +345,7 @@ def set_options(selected_category, contents):
         return (
             [{'label': sig, 'value': sig} for sig in combined],
             combined,
-            {'display': 'None'},
+            {'display': 'block'},
             content.get('info', f'Merged {selected_category} with uploaded file')
         )
 

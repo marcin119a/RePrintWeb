@@ -170,6 +170,7 @@ def create_vertical_dendrogram_with_query_labels_right(df, calc_func=calculate_r
     from scipy.cluster.hierarchy import linkage
 
     df = df.T
+    df.index = df.index.astype(str)
     ref_df = df[df.index.str.endswith('_ref')]
     query_df = df[df.index.str.endswith('_query')]
 

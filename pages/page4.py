@@ -238,36 +238,35 @@ from utils.utils import reprint
 )
 def update_graph(init_load, selected_file, n_clicks, selected_signatures, signatures, distance_metric, clustering_method, epsilon):
     ctx = dash.callback_context
-
     if not ctx.triggered:
         trigger_id = 'initial-load'
     else:
         trigger_id = ctx.triggered[0]['prop_id'].split('.')[0]
-
     if trigger_id == 'initial-load' or trigger_id == 'reload-button':
         if not selected_signatures or not selected_file:
             return {}, {}
+        # Always load _ref from selected file
+        df_ref = pd.read_csv(f"data/signatures/{selected_file}", sep='\t', index_col=0)
+        df_ref.columns = [f"{c}_ref" for c in df_ref.columns]
+        # If uploaded, merge _query columns
         if signatures is not None:
             if isinstance(signatures, list):
-                df_signatures = pd.DataFrame(signatures[0]['signatures_data'])
+                df_query = pd.DataFrame(signatures[0]['signatures_data'])
             else:
-                df_signatures = pd.DataFrame(signatures['signatures_data'])
-            df_signatures.set_index('Type', inplace=True)
-
-            df_reprint_all = reprint(df_signatures, epsilon=epsilon)
-
-            df_reprint = df_reprint_all[[col for col in selected_signatures if col in df_reprint_all.columns]]
-            df_signatures = df_signatures[[col for col in selected_signatures if col in df_signatures.columns]]
+                df_query = pd.DataFrame(signatures['signatures_data'])
+            if 'Type' in df_query.columns:
+                df_query.set_index('Type', inplace=True)
+            # Merge on index (Type)
+            df_all = df_ref.join(df_query, how='inner')
         else:
-            df_signatures = pd.read_csv(f"data/signatures/{selected_file}", sep='\t', index_col=0)
-            df_signatures.columns = [f"{c}_ref" for c in df_signatures.columns]
-
-            df_signatures = df_signatures[selected_signatures]
-            df_reprint = reprint(df_signatures, epsilon=epsilon)[selected_signatures]
-
+            df_all = df_ref
+        df_all = df_all[[col for col in selected_signatures if col in df_all.columns]]
         from utils.figpanel import create_vertical_dendrogram_with_query_labels_right
-        return (create_vertical_dendrogram_with_query_labels_right(df_signatures, calc_func=functions[distance_metric], method=clustering_method, text="Dendrogram of _ref signatures with attached _query"),
-                create_vertical_dendrogram_with_query_labels_right(df_reprint,   calc_func=functions[distance_metric], method=clustering_method,  text="Dendrogram of _ref reprints with attached _query"))
+        df_reprint = reprint(df_all, epsilon=epsilon)[df_all.columns]
+        return (
+            create_vertical_dendrogram_with_query_labels_right(df_all, calc_func=functions[distance_metric], method=clustering_method, text="Dendrogram of _ref and _query signatures"),
+            create_vertical_dendrogram_with_query_labels_right(df_reprint, calc_func=functions[distance_metric], method=clustering_method, text="Dendrogram of _ref and _query reprints")
+        )
     else:
         return {}, {}
 
@@ -277,42 +276,28 @@ def update_graph(init_load, selected_file, n_clicks, selected_signatures, signat
     Input('upload-data-4-signatures', 'contents'),
     Input('clear-upload-btn-4', 'n_clicks'),
     State('upload-data-4-signatures', 'filename'),
-    State('dropdown-4', 'value')  # dodajemy nazwę pliku bazowego
+    State('dropdown-4', 'value')
 )
-def update_output_signatures(contents, click,  filename, selected_file):
+def update_output_signatures(contents, click, filename, selected_file):
     if contents is None:
         return dash.no_update
 
     ctx = dash.callback_context
     trigger_id = ctx.triggered[0]['prop_id'].split('.')[0]
-    print(trigger_id)
     if trigger_id == 'clear-upload-btn-4':
-        df_ref = pd.read_csv(f"data/signatures/{selected_file}", sep='\t')
-        df_ref = df_ref.rename(columns={col: f"{col}_ref" for col in df_ref.columns if col != 'Type'})
+        return None
 
-        return [{
-            'signatures_data': df_ref.to_dict('records'),
-            'filename': None,
-            'info': f'Cleaned {selected_file} '
-        }]
-
-    df_ref = pd.read_csv(f"data/signatures/{selected_file}", sep='\t')
-    df_ref = df_ref.rename(columns={col: f"{col}_ref" for col in df_ref.columns if col != 'Type'})
-    df_ref.set_index('Type', inplace=True)
-
+    # Only parse uploaded file as _query
     df_query = parse_signatures(contents, filename)
     if 'Type' in df_query.columns:
         df_query.set_index('Type', inplace=True)
     df_query = df_query.rename(columns={col: f"{col}_query" for col in df_query.columns})
-
-    # Merge
-    merged = df_ref.join(df_query, how='inner')
-    merged.reset_index(inplace=True)
+    df_query.reset_index(inplace=True)
 
     return [{
-        'signatures_data': merged.to_dict('records'),
+        'signatures_data': df_query.to_dict('records'),
         'filename': filename,
-        'info': f'Merged base: {selected_file} with upload: {filename}'
+        'info': f'Uploaded file {filename} as _query signatures'
     }]
 
 
@@ -326,34 +311,27 @@ def update_output_signatures(contents, click,  filename, selected_file):
 )
 def set_options(selected_category, contents):
     base_signatures = data[selected_category]
+    # Always load _ref from selected file, _query from upload if present
+    ref_cols = [f"{s}_ref" for s in base_signatures]
+    query_cols = []
+    info = 'Not Uploaded'
     if contents is not None:
         if isinstance(contents, list):
             content = contents[0]
         else:
             content = contents
-
         df = pd.DataFrame(content['signatures_data'])
         if 'Type' in df.columns:
             df.set_index('Type', inplace=True)
-
         all_columns = df.columns.tolist()
-        ref_cols = sorted([col for col in all_columns if col.endswith('_ref')])
         query_cols = sorted([col for col in all_columns if col.endswith('_query')])
-
-        combined = ref_cols + query_cols
-
-        return (
-            [{'label': sig, 'value': sig} for sig in combined],
-            combined,
-            {'display': 'block'},
-            content.get('info', f'Merged {selected_category} with uploaded file')
-        )
-
+        info = content.get('info', 'Uploaded file as _query signatures')
+    combined = ref_cols + query_cols
     return (
-        [{'label': f"{s}_ref", 'value': f"{s}_ref"} for s in base_signatures],
-        [f"{s}_ref" for s in base_signatures],
+        [{'label': sig, 'value': sig} for sig in combined],
+        combined,
         {'display': 'block'},
-        'Not Uploaded'
+        info
     )
 
 @app.callback(

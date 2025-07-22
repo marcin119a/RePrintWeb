@@ -187,14 +187,6 @@ dbc.Collapse(
                                     className="ms-2"
                                 ),
                             ),
-                            dbc.Col(
-                                dbc.Button(
-                                    "Clear Upload",
-                                    id="clear-upload-btn-4",
-                                    color="danger",
-                                    className="ms-2"
-                                ),
-                            )
                         ]
                     )
         ),
@@ -274,18 +266,12 @@ def update_graph(init_load, selected_file, n_clicks, selected_signatures, signat
 @app.callback(
     Output('session-4-signatures', 'data'),
     Input('upload-data-4-signatures', 'contents'),
-    Input('clear-upload-btn-4', 'n_clicks'),
     State('upload-data-4-signatures', 'filename'),
     State('dropdown-4', 'value')
 )
-def update_output_signatures(contents, click, filename, selected_file):
+def update_output_signatures(contents, filename, selected_file):
     if contents is None:
         return dash.no_update
-
-    ctx = dash.callback_context
-    trigger_id = ctx.triggered[0]['prop_id'].split('.')[0]
-    if trigger_id == 'clear-upload-btn-4':
-        return None
 
     # Only parse uploaded file as _query
     df_query = parse_signatures(contents, filename)

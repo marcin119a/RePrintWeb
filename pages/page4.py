@@ -605,12 +605,14 @@ def update_signature_chips_4(selected_file, search_value, add_clicks, clear_clic
     chips = []
     for sig in filtered_sigs:
         is_selected = sig in selected_sigs
-        chip = dmc.Badge(
+        chip = dmc.Button(
             sig,
             id={"type": "sig-chip-4", "index": sig},
             color="blue" if is_selected else "gray",
             variant="filled" if is_selected else "light",
-            style={"cursor": "pointer", "padding": "0.35rem 0.75rem", "fontSize": "0.85rem", "fontWeight": "500"},
+            size="xs",
+            compact=True,
+            style={"cursor": "pointer", "fontSize": "0.85rem", "fontWeight": "500"},
             n_clicks=0,
         )
         chips.append(chip)

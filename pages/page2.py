@@ -747,8 +747,7 @@ def update_signature_chips_2(selected_file, search_value, add_clicks, clear_clic
             color="blue" if is_selected else "gray",
             variant="filled" if is_selected else "light",
             size="xs",
-            compact=True,
-            style={"cursor": "pointer", "fontSize": "0.9rem", "fontWeight": "500"},
+            style={"cursor": "pointer", "fontSize": "0.9rem", "fontWeight": "500", "padding": "0.25rem 0.75rem"},
             n_clicks=0,
         )
         chips.append(chip)

@@ -611,8 +611,7 @@ def update_signature_chips_4(selected_file, search_value, add_clicks, clear_clic
             color="blue" if is_selected else "gray",
             variant="filled" if is_selected else "light",
             size="xs",
-            compact=True,
-            style={"cursor": "pointer", "fontSize": "0.85rem", "fontWeight": "500"},
+            style={"cursor": "pointer", "fontSize": "0.85rem", "fontWeight": "500", "padding": "0.2rem 0.6rem"},
             n_clicks=0,
         )
         chips.append(chip)

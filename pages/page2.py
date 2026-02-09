@@ -263,7 +263,6 @@ page2_layout = html.Div([
                                         id='dropdown-2',
                                         options=dropdown_options,
                                         value=DEFAULT_SIGNATURES,
-                                        style={"width": "100%"}
                                     ),
                                 ]
                             ),
@@ -276,7 +275,6 @@ page2_layout = html.Div([
                                         options=[{'label': k, 'value': k} for k in data.keys()],
                                         multi=True,
                                         value=[k for k in data[DEFAULT_SIGNATURES]],
-                                        style={"width": "100%"}
                                     ),
                                 ]
                             ),

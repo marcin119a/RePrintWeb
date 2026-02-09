@@ -2,7 +2,8 @@ from utils.figpanel import create_heatmap_with_custom_sim
 from utils.utils import FILES, DEFAULT_SIGNATURES, linkage_methods, DEFAULT_LINKAGE_METHOD, reprint, calculate_rmse, calculate_cosine, calculate_js_divergence
 from main import app
 from dash import dcc, html, Input, Output, State, ctx
-import dash_bootstrap_components as dbc
+import dash_mantine_components as dmc
+from dash_iconify import DashIconify
 from pages.nav import navbar
 import pandas as pd
 import plotly.graph_objects as go
@@ -17,298 +18,496 @@ for file in FILES:
 dropdown_options = [{'label': file, 'value': file} for file in FILES]
 
 
-# Application layout
+# ============================================================================
+# STYLING CONFIGURATION
+# ============================================================================
+COLORS = {
+    "primary_blue": "#2563EB",      # Deep Royal Blue (Header)
+    "primary_dark": "#1e40af",      # Darker Blue
+    "bg_light": "#F8FAFC",          # Very light grey (Background)
+    "bg_lighter": "#F0F5FB",        # Even lighter blue-ish background
+    "white": "#FFFFFF",             # Pure white (Cards)
+    "navy": "#1E293B",              # Dark Navy (Advanced Options)
+    "teal": "#14B8A6",              # Teal/Green (Download)
+    "red": "#E11D48",               # Vibrant Red (Reload Heatmaps)
+    "text_primary": "#1F2937",      # Dark text
+    "text_secondary": "#6B7280",    # Secondary text
+    "border": "#E5E7EB",            # Light border
+    "shadow": "0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.04)",
+    "shadow_md": "0 4px 12px rgba(0, 0, 0, 0.12), 0 2px 6px rgba(0, 0, 0, 0.06)",
+}
+
+# ============================================================================
+# APPLICATION LAYOUT
+# ============================================================================
 page1_layout = html.Div([
     navbar,
-    dbc.Alert(
-        [
-            html.H5("How to Use This Dashboard", className="mb-3"),
-
-            html.H6("1. Workflow Steps", className="mt-2"),
-            html.Ol([
-                html.Li("Select a reference signature file from the first dropdown (e.g., COSMIC)."),
-                html.Li("Optionally upload your own query signatures using the drag-and-drop box."),
-                html.Li("Adjust advanced options (distance metric, clustering, epsilon), if needed."),
-                html.Li([
-                    html.Strong("Click "), "the ",
-                    html.Strong("Reload heatmaps"),
-                    " button to generate the analysis and update the plots."
-                ])
-            ], style={"font-size": "15px"}),
-
-
-            html.H6("Distance Metrics", className="mt-4"),
-            html.Ul([
-                html.Li("Cosine: Measures angular similarity between signatures", style={"font-size": "14px"}),
-                html.Li("RMSE: Root mean square error between normalized signatures", style={"font-size": "14px"}),
-                html.Li("JS Divergence: Jensen-Shannon divergence (symmetric version of Kullback-Leibler divergence)", style={"font-size": "14px"}),
-            ]),
-
-            html.H6("Downloads", className="mt-4"),
-            html.Ul([
-                html.Li("Download RePrint matrix as CSV", style={"font-size": "14px"}),
-                html.Li("Download original signature matrix", style={"font-size": "14px"}),
-            ])
-        ],
-        color="secondary",
-        dismissable=True,
-        style={"margin-top": "25px", "font-size": "15px", "background-color": "#f8f9fa",
-               "border": "1px solid #ced4da", "padding": "20px"}
-    ),
-    dbc.Container([
-        dbc.Card(
-            [
-                dbc.CardHeader("Actions"),
-                dbc.CardBody(
-                    dbc.Row(
-                        [
-                            dbc.Col(
-                                [
-                                    dbc.Button(
-                                        "Advanced Options",
-                                        id="toggle-button",
-                                        color="dark",
-                                        className="w-100"
+    
+    # Main Container with light grey background
+    dmc.Container(
+        size="xl",
+        style={"backgroundColor": COLORS["bg_light"], "minHeight": "100vh", "paddingTop": "3rem", "paddingBottom": "3rem"},
+        children=[
+            # Instructions Section - Accordion
+            dmc.Card(
+                style={
+                    "backgroundColor": COLORS["white"],
+                    "border": f"1px solid {COLORS['border']}",
+                    "boxShadow": COLORS["shadow"],
+                    "marginBottom": "2.5rem",
+                    "borderRadius": "0.75rem",
+                },
+                children=[
+                    dmc.Accordion(
+                        children=[
+                            dmc.AccordionItem(
+                                value="instructions",
+                                children=[
+                                    dmc.AccordionControl(
+                                        html.Div(
+                                            style={"display": "flex", "alignItems": "center", "gap": "0.75rem"},
+                                            children=[
+                                                DashIconify(icon="tabler:info-circle", width=20, height=20, color=COLORS["primary_blue"]),
+                                                html.H5("How to Use This Dashboard", style={"margin": 0, "fontWeight": "600"}),
+                                            ]
+                                        ),
                                     ),
-                                    dbc.Tooltip(
-                                        "Show or hide advanced settings",
-                                        target="toggle-button",
-                                        placement="bottom"
+                                    dmc.AccordionPanel(
+                                        children=dmc.Grid(
+                                        children=[
+                                            # Workflow Steps Column
+                                            dmc.GridCol(
+                                                span=4,
+                                                children=[
+                                                    html.H6("1. Workflow Steps", style={"fontWeight": "600", "marginBottom": "1rem"}),
+                                                    html.Ol(
+                                                        [
+                                                            html.Li("Select a reference signature file from the first dropdown (e.g., COSMIC).", style={"marginBottom": "0.75rem"}),
+                                                            html.Li("Optionally upload your own query signatures using the drag-and-drop box.", style={"marginBottom": "0.75rem"}),
+                                                            html.Li("Adjust advanced options (distance metric, clustering, epsilon), if needed.", style={"marginBottom": "0.75rem"}),
+                                                            html.Li([
+                                                                html.Strong("Click "), "the ",
+                                                                html.Strong("Reload heatmaps"),
+                                                                " button to generate the analysis and update the plots."
+                                                            ]),
+                                                        ],
+                                                        style={"fontSize": "0.95rem", "color": COLORS["text_primary"]}
+                                                    ),
+                                                ]
+                                            ),
+                                            # Distance Metrics Column
+                                            dmc.GridCol(
+                                                span=4,
+                                                children=[
+                                                    html.H6("2. Distance Metrics", style={"fontWeight": "600", "marginBottom": "1rem"}),
+                                                    html.Ul([
+                                                        html.Li(
+                                                            [html.Strong("Cosine: "), "Measures angular similarity between signatures"],
+                                                            style={"marginBottom": "0.75rem", "fontSize": "0.95rem", "color": COLORS["text_primary"]}
+                                                        ),
+                                                        html.Li(
+                                                            [html.Strong("RMSE: "), "Root mean square error between normalized signatures"],
+                                                            style={"marginBottom": "0.75rem", "fontSize": "0.95rem", "color": COLORS["text_primary"]}
+                                                        ),
+                                                        html.Li(
+                                                            [html.Strong("JS Divergence: "), "Jensen-Shannon divergence (symmetric version of Kullback-Leibler divergence)"],
+                                                            style={"fontSize": "0.95rem", "color": COLORS["text_primary"]}
+                                                        ),
+                                                    ], style={"paddingLeft": "1.5rem"}),
+                                                ]
+                                            ),
+                                            # Downloads Column
+                                            dmc.GridCol(
+                                                span=4,
+                                                children=[
+                                                    html.H6("3. Downloads", style={"fontWeight": "600", "marginBottom": "1rem"}),
+                                                    html.Ul([
+                                                        html.Li(
+                                                            "Download RePrint matrix as CSV",
+                                                            style={"marginBottom": "0.75rem", "fontSize": "0.95rem", "color": COLORS["text_primary"]}
+                                                        ),
+                                                        html.Li(
+                                                            "Download original signature matrix",
+                                                            style={"fontSize": "0.95rem", "color": COLORS["text_primary"]}
+                                                        ),
+                                                    ], style={"paddingLeft": "1.5rem"}),
+                                                ]
+                                            ),
+                                        ],
+                                        grow=True,
                                     )
-                                ],
-                                width=2
-                            ),
-                            dbc.Col(
-                                [
-                                    dbc.Button(
-                                        "Download Reprints",
-                                        id="btn_csv-1",
-                                        color="info",
-                                        className="w-100"
                                     ),
-                                    dbc.Tooltip(
-                                        "Download CSV file with reprint data",
-                                        target="btn_csv-1",
-                                        placement="bottom"
-                                    )
                                 ],
-                                width=2
                             ),
-                            dbc.Col(
-                                [
-                                    dbc.Button(
-                                        "Download Signatures",
-                                        id="btn_csv-signatures",
-                                        color="secondary",
-                                        className="w-100"
-                                    ),
-                                    dbc.Tooltip(
-                                        "Download CSV file with selected signature data",
-                                        target="btn_csv-signatures",
-                                        placement="bottom"
-                                    )
-                                ],
-                                width=2
-                            ),
-                            dbc.Col(
-                                [
-                                    dbc.Button(
-                                        "Reload heatmaps",
-                                        id="submit-button",
-                                        color="primary",
-                                        className="w-100"
-                                    ),
-                                    dbc.Tooltip(
-                                        "Start the analysis pipeline",
-                                        target="submit-button",
-                                        placement="bottom",
-                                        id="tooltip-button",
-                                        style={"display": "none"}
-                                    )
-                                ],
-                                width=2
-                            ),
-                        ],
-                        className="mb-3",
-                        align="center"
-                    )
-                )
-            ],
-            className="mb-4 shadow"
-        ),
-        dbc.Collapse(
-            dbc.Card(dbc.CardBody([
-                dbc.Form([
-                    dbc.Row([
-                        dbc.Col([
-                            dbc.Label("Distance Metric", html_for="distance-metric"),
-                            dcc.Dropdown(
-                                id='distance-metric',
-                                options=[
-                                    {'label': 'Cosine', 'value': 'cosine'},
-                                    {'label': 'RMSE', 'value': 'rmse'},
-                                    {'label': 'JS Divergence', 'value': 'js_divergence'}
-                                ],
-                                placeholder="Select distance metric",
-                                value='rmse',
-                            ),
-                        ])
-                    ]),
-                    dbc.Row([
-                        dbc.Col([
-                            dbc.Label("Clustering Method", html_for="clustering-method"),
-                            dcc.Dropdown(
-                                id='clustering-method',
-                                options=[{'label': method.title(), 'value': method} for method in linkage_methods],
-                                placeholder="Select clustering method",
-                                value=DEFAULT_LINKAGE_METHOD,
-                                clearable=False,
-                            ),
-                        ])
-                    ]),
-                    dbc.Row([
-                        dbc.Col([
-                            dbc.Label("Epsilon (pseudo-count)", html_for="epsilon"),
-                            dbc.Input(
-                                type="number",
-                                id="epsilon",
-                                placeholder="Enter epsilon value",
-                                value=1e-4,
-                                min=1e-10,
-                                max=1e-2
-                            ),
-                            dbc.FormText(
-                                "Small pseudocount (ε) added to signature probabilities to reduce noise and avoid missing values due to rare mutations. Default: ε = 1e-4")
-                        ])
-                    ])
-                ])
-            ])),
-            id="collapse-form"
-        ),
-        html.Div(id='form-output')
-    ], fluid=True),
-    dbc.Container([
-        dbc.Row([
-        dcc.Dropdown(
-            id='dropdown-1',
-            options=dropdown_options,
-            disabled=False,
-            value=DEFAULT_SIGNATURES
-        ),
-        dcc.Dropdown(
-                id='signatures-dropdown-1',
-                options=[{'label': k, 'value': k} for k in data.keys()],
-                multi=True,
-                value=[k for k in data[DEFAULT_SIGNATURES]],
-            )
-    ]),
-        dbc.Alert(
-        [
-            html.H5("Expected File Format", style={"font-size": "18px", "font-weight": "bold"}),
-            html.P("The uploaded file should be a tab-separated file (.txt) containing mutation types and corresponding mutation signatures.",
-                style={"font-size": "14px"}),
-            html.P("Columns:", style={"font-size": "14px", "margin-bottom": "5px"}),
-            html.Ul([
-                html.Li("Type: Mutation type (e.g., A[C>A]A, A[C>A]C, ...).", style={"font-size": "13px"}),
-                html.Li("SBS1, SBS2, ..., SBSN: Signature mutation values (frequencies or probabilities).", style={"font-size": "13px"})
-            ], style={"padding-left": "20px", "margin-bottom": "5px"}),
-            html.P("Example first few rows:", style={"font-size": "14px", "margin-bottom": "5px"}),
-            html.Pre(
-                "Type\tSBS1\tSBS2\tSBS3\n"
-                "A[C>A]A\t0.001\t0.002\t0.003\n"
-                "A[C>A]C\t0.004\t0.005\t0.006",
-                style={"white-space": "pre-wrap", "font-family": "monospace", "font-size": "12px", "background-color": "#f8f9fa", "padding": "5px"}
+                        ]
+                    ),
+                ]
             ),
-        ],
-        color="info",
-        dismissable=True,
-        style={"font-size": "14px", "padding": "10px"}
-    ),
-    dcc.Upload(
-            id='upload-data-1-signatures',
-            children=html.Div(['Drag and drop your signatures']),
-            style={
-                'width': '300px',
-                'height': '60px',
-                'lineHeight': '60px',
-                'borderWidth': '1px',
-                'borderStyle': 'dashed',
-                'borderRadius': '5px',
-                'textAlign': 'center',
-                'margin': '10px'
-            },
-            multiple=False
-        ),
-    html.Div(id='upload-error-message-1'),
-    html.Div(id='info_uploader'),
-    dcc.Store(id='session-1-signatures', storage_type='session', data=None),
-    dbc.Row([
-        dbc.Col(html.Label("Hide Heatmap:", className="h5"), width="auto"),
-        dbc.Col(
-            dbc.Switch(
-                id="toggle-heatmap",
-                value=False,
-                label="On/Off",
-                className="mb-3"
+            
+            # Actions Toolbar
+            dmc.Card(
+                style={
+                    "backgroundColor": COLORS["white"],
+                    "border": f"1px solid {COLORS['border']}",
+                    "boxShadow": COLORS["shadow"],
+                    "marginBottom": "2.5rem",
+                    "padding": "2rem",
+                    "borderRadius": "0.75rem",
+                },
+                children=[
+                    dmc.Group(
+                        justify="center",
+                        gap="md",
+                        style={"display": "flex", "flexWrap": "wrap"},
+                        children=[
+                            dmc.Button(
+                                "Advanced Options",
+                                id="toggle-button",
+                                color="dark",
+                                size="md",
+                                style={"backgroundColor": COLORS["navy"]},
+                                leftSection=DashIconify(icon="tabler:adjustments", width=18),
+                            ),
+                            dmc.Button(
+                                "Download Reprints",
+                                id="btn_csv-1",
+                                color="teal",
+                                size="md",
+                                style={"backgroundColor": COLORS["teal"]},
+                                leftSection=DashIconify(icon="tabler:download", width=18),
+                            ),
+                            dmc.Button(
+                                "Download Signatures",
+                                id="btn_csv-signatures",
+                                color="gray",
+                                size="md",
+                                leftSection=DashIconify(icon="tabler:download", width=18),
+                            ),
+                            dmc.Button(
+                                "Reload Heatmaps",
+                                id="submit-button",
+                                color="red",
+                                size="md",
+                                style={"backgroundColor": COLORS["red"]},
+                                leftSection=DashIconify(icon="tabler:reload", width=18),
+                            ),
+                        ]
+                    ),
+                ]
             ),
-            width="auto"
-        ),
-    ], className="mb-4"),
-    dbc.Row([
-        dbc.Col([
-            html.H5("Signature Similarity"),
-            dcc.Loading(
-                id="loading-heatmap-plot",
-                type="default",
-                children=dcc.Graph(
-                    id='heatmap-plot',
-                    config={
-                        'displayModeBar': True,
-                        'displaylogo': False,
-                        'modeBarButtonsToAdd': [
-                            'toImage'
+            
+            # Advanced Options Collapse
+            dmc.Collapse(
+                opened=False,
+                id="collapse-form",
+                children=[
+                    dmc.Card(
+                        style={
+                            "backgroundColor": COLORS["white"],
+                            "border": f"1px solid {COLORS['border']}",
+                            "boxShadow": COLORS["shadow"],
+                            "marginBottom": "2.5rem",
+                            "padding": "2rem",
+                            "borderRadius": "0.75rem",
+                        },
+                        children=[
+                            dmc.Grid(
+                                children=[
+                                    dmc.GridCol(
+                                        span=6,
+                                        children=[
+                                            dmc.Text("Distance Metric", size="sm", fw=600, style={"marginBottom": "0.5rem"}),
+                                            dcc.Dropdown(
+                                                id='distance-metric',
+                                                options=[
+                                                    {'label': 'Cosine', 'value': 'cosine'},
+                                                    {'label': 'RMSE', 'value': 'rmse'},
+                                                    {'label': 'JS Divergence', 'value': 'js_divergence'}
+                                                ],
+                                                value='rmse',
+                                                style={"width": "100%"}
+                                            ),
+                                        ]
+                                    ),
+                                    dmc.GridCol(
+                                        span=6,
+                                        children=[
+                                            dmc.Text("Clustering Method", size="sm", fw=600, style={"marginBottom": "0.5rem"}),
+                                            dcc.Dropdown(
+                                                id='clustering-method',
+                                                options=[{'label': method.title(), 'value': method} for method in linkage_methods],
+                                                value=DEFAULT_LINKAGE_METHOD,
+                                                clearable=False,
+                                                style={"width": "100%"}
+                                            ),
+                                        ]
+                                    ),
+                                    dmc.GridCol(
+                                        span=12,
+                                        children=[
+                                            dmc.Text("Epsilon (pseudo-count)", size="sm", fw=600, style={"marginBottom": "0.5rem"}),
+                                            dmc.NumberInput(
+                                                id="epsilon",
+                                                value=1e-4,
+                                                min=1e-10,
+                                                max=1e-2,
+                                                step=1e-5,
+                                                placeholder="Enter epsilon value",
+                                                style={"width": "100%"}
+                                            ),
+                                            dmc.Text(
+                                                "Small pseudocount (ε) added to signature probabilities to reduce noise and avoid missing values due to rare mutations. Default: ε = 1e-4",
+                                                size="xs",
+                                                c="dimmed",
+                                                style={"marginTop": "0.5rem"}
+                                            ),
+                                        ]
+                                    ),
+                                ],
+                                grow=True,
+                            ),
+                        ]
+                    ),
+                ]
+            ),
+            
+            html.Div(id='form-output'),
+            
+            # File Selection and Upload Section
+            dmc.Card(
+                style={
+                    "backgroundColor": COLORS["white"],
+                    "border": f"1px solid {COLORS['border']}",
+                    "boxShadow": COLORS["shadow"],
+                    "marginBottom": "2.5rem",
+                    "padding": "2rem",
+                    "borderRadius": "0.75rem",
+                },
+                children=[
+                    dmc.Grid(
+                        children=[
+                            dmc.GridCol(
+                                span=6,
+                                children=[
+                                    dmc.Text("Reference Signature File", size="sm", fw=600, style={"marginBottom": "0.5rem"}),
+                                    dcc.Dropdown(
+                                        id='dropdown-1',
+                                        options=dropdown_options,
+                                        value=DEFAULT_SIGNATURES,
+                                    ),
+                                ]
+                            ),
+                            dmc.GridCol(
+                                span=6,
+                                children=[
+                                    dmc.Text("Select Signatures", size="sm", fw=600, style={"marginBottom": "0.5rem"}),
+                                    dcc.Dropdown(
+                                        id='signatures-dropdown-1',
+                                        options=[{'label': k, 'value': k} for k in data.keys()],
+                                        multi=True,
+                                        value=[k for k in data[DEFAULT_SIGNATURES]],
+                                    ),
+                                ]
+                            ),
                         ],
-                        'toImageButtonOptions': {
-                            'format': 'png',
-                            'filename': 'signature_similarity_heatmap',
-                            'height': 600,
-                            'width': 800,
-                            'scale': 2
+                        grow=True,
+                    ),
+                ]
+            ),
+            
+            # File Format Instructions
+            dmc.Card(
+                style={
+                    "backgroundColor": "#F0F9FF",
+                    "border": f"1px solid #BFDBFE",
+                    "borderRadius": "0.75rem",
+                    "marginBottom": "2.5rem",
+                    "padding": "2rem",
+                },
+                children=[
+                    html.Div(
+                        style={"display": "flex", "gap": "1rem", "alignItems": "flex-start"},
+                        children=[
+                            DashIconify(icon="tabler:info-circle", width=20, height=20, color="#0369A1", style={"flexShrink": 0, "marginTop": "0.25rem"}),
+                            html.Div(
+                                children=[
+                                    html.H5("Expected File Format", style={"fontWeight": "600", "marginTop": 0, "marginBottom": "0.75rem"}),
+                                    html.P(
+                                        "The uploaded file should be a tab-separated file (.txt) containing mutation types and corresponding mutation signatures.",
+                                        style={"fontSize": "0.95rem", "marginBottom": "0.75rem"}
+                                    ),
+                                    html.P("Columns:", style={"fontSize": "0.95rem", "marginBottom": "0.5rem", "fontWeight": "600"}),
+                                    html.Ul([
+                                        html.Li("Type: Mutation type (e.g., A[C>A]A, A[C>A]C, ...)", style={"fontSize": "0.9rem"}),
+                                        html.Li("SBS1, SBS2, ..., SBSN: Signature mutation values (frequencies or probabilities)", style={"fontSize": "0.9rem"})
+                                    ], style={"paddingLeft": "1.5rem", "marginBottom": "0.75rem"}),
+                                    html.P("Example first few rows:", style={"fontSize": "0.95rem", "marginBottom": "0.5rem", "fontWeight": "600"}),
+                                    html.Pre(
+                                        "Type\tSBS1\tSBS2\tSBS3\n"
+                                        "A[C>A]A\t0.001\t0.002\t0.003\n"
+                                        "A[C>A]C\t0.004\t0.005\t0.006",
+                                        style={
+                                            "whiteSpace": "pre-wrap",
+                                            "fontFamily": "monospace",
+                                            "fontSize": "0.85rem",
+                                            "backgroundColor": "white",
+                                            "padding": "0.75rem",
+                                            "borderRadius": "0.375rem",
+                                            "border": f"1px solid {COLORS['border']}",
+                                            "overflow": "auto",
+                                            "marginBottom": 0
+                                        }
+                                    ),
+                                ]
+                            ),
+                        ]
+                    ),
+                ]
+            ),
+            
+            # File Upload Area
+            dmc.Card(
+                style={
+                    "backgroundColor": COLORS["white"],
+                    "border": f"2px dashed {COLORS['primary_blue']}",
+                    "borderRadius": "0.75rem",
+                    "marginBottom": "2.5rem",
+                    "padding": "3rem 2rem",
+                    "textAlign": "center",
+                    "cursor": "pointer",
+                    "transition": "all 0.3s ease",
+                    "background": f"linear-gradient(135deg, {COLORS['white']} 0%, {COLORS['bg_lighter']} 100%)",
+                },
+                children=[
+                    dcc.Upload(
+                        id='upload-data-1-signatures',
+                        children=html.Div([
+                            DashIconify(icon="tabler:cloud-upload", width=40, height=40, color=COLORS["primary_blue"], style={"marginBottom": "0.75rem"}),
+                            html.P("Drag and drop your signature file here, or click to select", style={"fontSize": "1rem", "fontWeight": "500"}),
+                            html.P("Accepted format: .txt (tab-separated)", style={"fontSize": "0.85rem", "color": COLORS["text_secondary"]})
+                        ]),
+                        multiple=False,
+                        style={
+                            "width": "100%",
+                            "cursor": "pointer",
                         }
-                    }
-                )
-            )
-        ]),
-        dbc.Col([
-            html.H5("RePrint Similarity"),
-            dcc.Loading(
-                id="loading-heatmap-reprint-plot",
-                type="default",
-                children=dcc.Graph(
-                    id='heatmap-reprint-plot',
-                    config={
-                        'displayModeBar': True,
-                        'displaylogo': False,
-                        'modeBarButtonsToAdd': [
-                            'toImage'
+                    ),
+                ]
+            ),
+            
+            html.Div(id='upload-error-message-1'),
+            html.Div(id='info_uploader'),
+            dcc.Store(id='session-1-signatures', storage_type='session', data=None),
+            
+            # Hide Heatmap Toggle
+            dmc.Card(
+                style={
+                    "backgroundColor": COLORS["white"],
+                    "border": f"1px solid {COLORS['border']}",
+                    "boxShadow": COLORS["shadow"],
+                    "marginBottom": "2.5rem",
+                    "padding": "2rem",
+                    "borderRadius": "0.75rem",
+                },
+                children=[
+                    dmc.Group(
+                        children=[
+                            dmc.Text("Hide Heatmap Visualization", size="md", fw=600),
+                            dmc.Switch(
+                                id="toggle-heatmap",
+                                checked=False,
+                                onLabel="OFF",
+                                offLabel="ON",
+                            ),
                         ],
-                        'toImageButtonOptions': {
-                            'format': 'png',
-                            'filename': 'reprint_similarity_heatmap',
-                            'height': 600,
-                            'width': 800,
-                            'scale': 2
-                        }
-                    }
-                )
-            )
-        ])
-    ]),
-    dcc.Location(id='url-page1', refresh=False),
-    dcc.Download(id="download-dataframe-csv-1"),
-    dcc.Download(id="download-dataframe-csv-signatures")
-    ], fluid=True),
-
+                        justify="space-between",
+                    ),
+                ]
+            ),
+            
+            # Heatmaps Grid
+            dmc.Grid(
+                children=[
+                    dmc.GridCol(
+                        span=6,
+                        children=[
+                            dmc.Card(
+                                style={
+                                    "backgroundColor": COLORS["white"],
+                                    "border": f"1px solid {COLORS['border']}",
+                                    "boxShadow": COLORS["shadow"],
+                                    "borderRadius": "0.75rem",
+                                },
+                                children=[
+                                    html.H5("Signature Similarity", style={"fontWeight": "600", "marginBottom": "1rem"}),
+                                    dcc.Loading(
+                                        id="loading-heatmap-plot",
+                                        type="default",
+                                        children=dcc.Graph(
+                                            id='heatmap-plot',
+                                            config={
+                                                'displayModeBar': True,
+                                                'displaylogo': False,
+                                                'modeBarButtonsToAdd': ['toImage'],
+                                                'toImageButtonOptions': {
+                                                    'format': 'png',
+                                                    'filename': 'signature_similarity_heatmap',
+                                                    'height': 600,
+                                                    'width': 800,
+                                                    'scale': 2
+                                                }
+                                            }
+                                        )
+                                    )
+                                ]
+                            ),
+                        ]
+                    ),
+                    dmc.GridCol(
+                        span=6,
+                        children=[
+                            dmc.Card(
+                                style={
+                                    "backgroundColor": COLORS["white"],
+                                    "border": f"1px solid {COLORS['border']}",
+                                    "boxShadow": COLORS["shadow"],
+                                    "borderRadius": "0.75rem",
+                                },
+                                children=[
+                                    html.H5("RePrint Similarity", style={"fontWeight": "600", "marginBottom": "1rem"}),
+                                    dcc.Loading(
+                                        id="loading-heatmap-reprint-plot",
+                                        type="default",
+                                        children=dcc.Graph(
+                                            id='heatmap-reprint-plot',
+                                            config={
+                                                'displayModeBar': True,
+                                                'displaylogo': False,
+                                                'modeBarButtonsToAdd': ['toImage'],
+                                                'toImageButtonOptions': {
+                                                    'format': 'png',
+                                                    'filename': 'reprint_similarity_heatmap',
+                                                    'height': 600,
+                                                    'width': 800,
+                                                    'scale': 2
+                                                }
+                                            }
+                                        )
+                                    )
+                                ]
+                            ),
+                        ]
+                    ),
+                ],
+                gutter="md",
+                grow=True,
+            ),
+            
+            dcc.Location(id='url-page1', refresh=False),
+            dcc.Download(id="download-dataframe-csv-1"),
+            dcc.Download(id="download-dataframe-csv-signatures")
+        ]
+    ),
 ])
 
 from utils.utils import parse_signatures
@@ -338,15 +537,27 @@ def show_upload_status(contents, filename):
     if contents is not None:
         try:
             _ = parse_signatures(contents, filename)
-            return dbc.Alert(f"Successfully loaded file: {filename}", color="success", dismissable=True)
+            return dmc.Alert(
+                f"Successfully loaded file: {filename}",
+                icon=DashIconify(icon="tabler:check-circle", width=18),
+                title="Success",
+                color="green",
+                dismissable=True
+            )
         except Exception as e:
-            return dbc.Alert(f"Error while processing file '{filename}'", color="danger", dismissable=True)
+            return dmc.Alert(
+                f"Error while processing file '{filename}'",
+                icon=DashIconify(icon="tabler:alert-circle", width=18),
+                title="Error",
+                color="red",
+                dismissable=True
+            )
     return ""
 
 @app.callback(
-    Output("collapse-form", "is_open"),
+    Output("collapse-form", "opened"),
     [Input("toggle-button", "n_clicks")],
-    [State("collapse-form", "is_open")],
+    [State("collapse-form", "opened")],
 )
 def toggle_collapse(n, is_open):
     if n:
@@ -360,7 +571,7 @@ def toggle_collapse(n, is_open):
      Output('heatmap-plot', 'figure'),
      Output('heatmap-reprint-plot', 'figure')],
     [Input('submit-button', 'n_clicks'),
-     Input("toggle-heatmap", "value")],
+     Input("toggle-heatmap", "checked")],
     [State('dropdown-1', 'value'),
      State('signatures-dropdown-1', 'value'),
      State('distance-metric', 'value'),
@@ -486,19 +697,20 @@ def download_signatures_only(n_clicks, selected_signatures, selected_file, conte
 
     return dcc.send_data_frame(df_signatures.to_csv, filename="signatures.csv")
 
-@app.callback(
-    Output("submit-button", "color"),
-    Output("tooltip-button", "style"),
-    Input("signatures-dropdown-1", "value"),
-    Input("submit-button", "n_clicks"),
-    prevent_initial_call=True
-)
-def highlight_button_on_dropdown_change(dropdown_values, n_clicks):
-    if ctx.triggered_id == "signatures-dropdown-1":
-        return "danger", {"display": "block"}
-    elif ctx.triggered_id == "submit-button":
-        return "primary", {"display": "none"}
-    return dash.no_update, dash.no_update
+# Callback removed - tooltip-button element doesn't exist in layout
+# @app.callback(
+#     Output("submit-button", "color"),
+#     Output("tooltip-button", "style"),
+#     Input("signatures-dropdown-1", "value"),
+#     Input("submit-button", "n_clicks"),
+#     prevent_initial_call=True
+# )
+# def highlight_button_on_dropdown_change(dropdown_values, n_clicks):
+#     if ctx.triggered_id == "signatures-dropdown-1":
+#         return "danger", {"display": "block"}
+#     elif ctx.triggered_id == "submit-button":
+#         return "primary", {"display": "none"}
+#     return dash.no_update, dash.no_update
 
 
 @app.callback(

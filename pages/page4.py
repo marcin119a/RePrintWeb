@@ -1,6 +1,6 @@
 from utils.utils import parse_signatures, FILES, DEFAULT_SIGNATURES, calculate_rmse, calculate_cosine, calculate_kl_divergence, calculate_js_divergence, reprint
 from utils.figpanel import create_vertical_dendrogram_with_query_labels_right
-from dash import dcc, html, Input, Output, State, ctx
+from dash import dcc, html, Input, Output, State, ctx, ALL
 from main import app
 import dash_mantine_components as dmc
 from dash_iconify import DashIconify
@@ -277,20 +277,81 @@ page4_layout = html.Div([
                                     gap="sm",
                                     style={"marginBottom": "1.5rem"}
                                 ),
-                                dmc.Text("Reference Database", size="sm", fw=600, style={"marginBottom": "0.5rem"}),
+                                
+                                # Active Reference File Card
+                                dmc.Paper(
+                                    children=[
+                                        dmc.Group(
+                                            children=[
+                                                DashIconify(icon="tabler:file-text", width=20, height=20, color=COLORS["primary_blue"]),
+                                                dmc.Stack(
+                                                    children=[
+                                                        dmc.Text("Active File", size="xs", c="dimmed"),
+                                                        dmc.Text(id="active-file-display-4", size="sm", fw=700, style={"color": COLORS["text_primary"]}),
+                                                    ],
+                                                    gap=0,
+                                                ),
+                                            ],
+                                            grow=True,
+                                            gap="sm",
+                                        ),
+                                    ],
+                                    p="sm",
+                                    radius="md",
+                                    style={"backgroundColor": "#F0F5FB", "border": f"1px solid {COLORS['border']}", "marginBottom": "1rem"},
+                                ),
+                                
+                                dmc.Text("Change Reference File", size="sm", fw=600, style={"marginBottom": "0.5rem"}),
                                 dcc.Dropdown(
                                     id='dropdown-4',
                                     options=dropdown_options,
                                     value=DEFAULT_SIGNATURES,
-                                    style={"width": "100%", "marginBottom": "1.5rem"}
                                 ),
-                                dmc.Text("Select Reference Signatures", size="sm", fw=600, style={"marginBottom": "0.75rem"}),
-                                dcc.Dropdown(
-                                    id='signatures-dropdown-4',
-                                    options=[{'label': k, 'value': k} for k in data.keys()],
-                                    multi=True,
-                                    value=[k for k in data[DEFAULT_SIGNATURES]],
+                                
+                                html.Div(style={"marginTop": "1.5rem"}),
+                                
+                                # Signature Selection with Search
+                                dmc.Group(
+                                    children=[
+                                        dmc.Text("Select Signatures", size="sm", fw=600),
+                                        dmc.Group(
+                                            children=[
+                                                dmc.Button("Add All", id="add-all-btn-4", size="xs", variant="light", color="blue"),
+                                                dmc.Button("Clear All", id="clear-all-btn-4", size="xs", variant="light", color="gray"),
+                                            ],
+                                            gap="xs",
+                                        ),
+                                    ],
+                                    justify="space-between",
+                                    style={"marginBottom": "0.75rem"}
                                 ),
+                                
+                                # Search bar
+                                dmc.TextInput(
+                                    id="signature-search-4",
+                                    placeholder="🔍 Search signatures...",
+                                    icon=DashIconify(icon="tabler:search", width=18),
+                                    style={"marginBottom": "0.75rem"},
+                                ),
+                                
+                                # Signature Chips
+                                html.Div(
+                                    id="signatures-chips-container-4",
+                                    style={
+                                        "display": "flex",
+                                        "flexWrap": "wrap",
+                                        "gap": "0.5rem",
+                                        "padding": "0.75rem",
+                                        "backgroundColor": "#F8FAFC",
+                                        "borderRadius": "0.375rem",
+                                        "border": f"1px solid {COLORS['border']}",
+                                        "minHeight": "100px",
+                                        "alignContent": "flex-start",
+                                    }
+                                ),
+                                
+                                # Store for selected signatures
+                                dcc.Store(id="selected-signatures-store-4", data=[k for k in data[DEFAULT_SIGNATURES]]),
                             ]
                         ),
                     ]
@@ -487,6 +548,105 @@ page4_layout = html.Div([
         ]
     ),
 ])
+
+
+# ============================================================================
+# New Callbacks for Enhanced Signature Selection UI for Page4
+# ============================================================================
+
+@app.callback(
+    Output("active-file-display-4", "children"),
+    Input("dropdown-4", "value")
+)
+def update_active_file_display_4(selected_file):
+    """Update the active file display"""
+    if selected_file and selected_file in data:
+        return selected_file
+    return "None"
+
+
+@app.callback(
+    [Output("signatures-chips-container-4", "children"),
+     Output("selected-signatures-store-4", "data")],
+    [Input("dropdown-4", "value"),
+     Input("signature-search-4", "value"),
+     Input("add-all-btn-4", "n_clicks"),
+     Input("clear-all-btn-4", "n_clicks")],
+    State("selected-signatures-store-4", "data"),
+    prevent_initial_call=False
+)
+def update_signature_chips_4(selected_file, search_value, add_clicks, clear_clicks, selected_sigs):
+    """Generate signature chips based on file and search/filter"""
+    if not selected_file or selected_file not in data:
+        return [], []
+    
+    # Get all signatures from selected file
+    all_sigs = data[selected_file]
+    
+    # Initialize selected_sigs if None
+    if selected_sigs is None:
+        selected_sigs = all_sigs.copy()
+    
+    # Handle "Add All" button
+    if add_clicks and ctx.triggered_id == "add-all-btn-4":
+        selected_sigs = all_sigs.copy()
+    
+    # Handle "Clear All" button
+    if clear_clicks and ctx.triggered_id == "clear-all-btn-4":
+        selected_sigs = []
+    
+    # Filter by search value
+    filtered_sigs = all_sigs
+    if search_value:
+        search_lower = search_value.lower()
+        filtered_sigs = [s for s in all_sigs if search_lower in s.lower()]
+    
+    # Create chips
+    chips = []
+    for sig in filtered_sigs:
+        is_selected = sig in selected_sigs
+        chip = dmc.Badge(
+            sig,
+            id={"type": "sig-chip-4", "index": sig},
+            color="blue" if is_selected else "gray",
+            variant="filled" if is_selected else "light",
+            style={"cursor": "pointer", "padding": "0.35rem 0.75rem", "fontSize": "0.85rem", "fontWeight": "500"},
+            n_clicks=0,
+        )
+        chips.append(chip)
+    
+    return chips, selected_sigs
+
+
+@app.callback(
+    Output("selected-signatures-store-4", "data", allow_duplicate=True),
+    Input({"type": "sig-chip-4", "index": ALL}, "n_clicks"),
+    State("selected-signatures-store-4", "data"),
+    prevent_initial_call=True
+)
+def toggle_signature_chip_4(n_clicks, selected_sigs):
+    """Handle individual chip clicks to toggle selection"""
+    if not ctx.triggered_id or not selected_sigs:
+        return selected_sigs
+    
+    sig = ctx.triggered_id["index"]
+    
+    if sig in selected_sigs:
+        selected_sigs.remove(sig)
+    else:
+        selected_sigs.append(sig)
+    
+    return selected_sigs
+
+
+@app.callback(
+    Output("signatures-dropdown-4", "value", allow_duplicate=True),
+    Input("selected-signatures-store-4", "data"),
+    prevent_initial_call=True
+)
+def sync_dropdown_with_store_4(selected_sigs):
+    """Keep the hidden dropdown in sync with the chip selection"""
+    return selected_sigs if selected_sigs else []
 
 
 @app.callback(

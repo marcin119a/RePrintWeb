@@ -350,8 +350,19 @@ page4_layout = html.Div([
                                     }
                                 ),
                                 
-                                # Store for selected signatures
-                                dcc.Store(id="selected-signatures-store-4", data=[k for k in data[DEFAULT_SIGNATURES]]),
+                                # Store for selected signatures (use _ref suffix to match df columns)
+                                dcc.Store(id="selected-signatures-store-4", data=[f"{k}_ref" for k in data[DEFAULT_SIGNATURES]]),
+                                
+                                # Hidden dropdown - kept in sync with chips, used by other callbacks
+                                html.Div(
+                                    dcc.Dropdown(
+                                        id='signatures-dropdown-4',
+                                        options=[{'label': f"{s}_ref", 'value': f"{s}_ref"} for s in data[DEFAULT_SIGNATURES]],
+                                        multi=True,
+                                        value=[f"{s}_ref" for s in data[DEFAULT_SIGNATURES]],
+                                    ),
+                                    style={"display": "none"}
+                                ),
                             ]
                         ),
                     ]
@@ -571,17 +582,18 @@ def update_active_file_display_4(selected_file):
     [Input("dropdown-4", "value"),
      Input("signature-search-4", "value"),
      Input("add-all-btn-4", "n_clicks"),
-     Input("clear-all-btn-4", "n_clicks")],
-    State("selected-signatures-store-4", "data"),
+     Input("clear-all-btn-4", "n_clicks"),
+     Input("selected-signatures-store-4", "data")],
     prevent_initial_call=False
 )
 def update_signature_chips_4(selected_file, search_value, add_clicks, clear_clicks, selected_sigs):
-    """Generate signature chips based on file and search/filter"""
+    """Generate signature chips based on file and search/filter. Uses _ref suffix to match df columns."""
     if not selected_file or selected_file not in data:
         return [], []
     
-    # Get all signatures from selected file
-    all_sigs = data[selected_file]
+    # Get all reference signatures with _ref suffix (matches df_ref column names)
+    base_sigs = data[selected_file]
+    all_sigs = [f"{s}_ref" for s in base_sigs]
     
     # Initialize selected_sigs if None
     if selected_sigs is None:
@@ -595,18 +607,19 @@ def update_signature_chips_4(selected_file, search_value, add_clicks, clear_clic
     if clear_clicks and ctx.triggered_id == "clear-all-btn-4":
         selected_sigs = []
     
-    # Filter by search value
+    # Filter by search value (search in base names for UX)
     filtered_sigs = all_sigs
     if search_value:
         search_lower = search_value.lower()
         filtered_sigs = [s for s in all_sigs if search_lower in s.lower()]
     
-    # Create chips
+    # Create chips (display base name without _ref for readability)
     chips = []
     for sig in filtered_sigs:
         is_selected = sig in selected_sigs
+        display_name = sig.replace("_ref", "").replace("_query", "")
         chip = dmc.Button(
-            sig,
+            display_name,
             id={"type": "sig-chip-4", "index": sig},
             color="blue" if is_selected else "gray",
             variant="filled" if is_selected else "light",
@@ -622,22 +635,36 @@ def update_signature_chips_4(selected_file, search_value, add_clicks, clear_clic
 @app.callback(
     Output("selected-signatures-store-4", "data", allow_duplicate=True),
     Input({"type": "sig-chip-4", "index": ALL}, "n_clicks"),
-    State("selected-signatures-store-4", "data"),
+    [State("selected-signatures-store-4", "data"),
+     State("dropdown-4", "value"),
+     State("signature-search-4", "value")],
     prevent_initial_call=True
 )
-def toggle_signature_chip_4(n_clicks, selected_sigs):
-    """Handle individual chip clicks to toggle selection"""
-    if not ctx.triggered_id or not selected_sigs:
-        return selected_sigs
+def toggle_signature_chip_4(n_clicks, selected_sigs, selected_file, search_value):
+    """Handle individual chip clicks to toggle selection. Use n_clicks index to find clicked chip."""
+    if not n_clicks or selected_sigs is None or not selected_file or selected_file not in data:
+        return dash.no_update
     
-    sig = ctx.triggered_id["index"]
+    base_sigs = data[selected_file]
+    all_sigs = [f"{s}_ref" for s in base_sigs]
+    filtered_sigs = all_sigs
+    if search_value:
+        search_lower = search_value.lower()
+        filtered_sigs = [s for s in all_sigs if search_lower in s.lower()]
     
-    if sig in selected_sigs:
-        selected_sigs.remove(sig)
+    clicked_idx = next((i for i, c in enumerate(n_clicks) if c), None)
+    if clicked_idx is None or clicked_idx >= len(filtered_sigs):
+        return dash.no_update
+    
+    sig = filtered_sigs[clicked_idx]
+    new_sigs = list(selected_sigs)
+    
+    if sig in new_sigs:
+        new_sigs.remove(sig)
     else:
-        selected_sigs.append(sig)
+        new_sigs.append(sig)
     
-    return selected_sigs
+    return new_sigs
 
 
 @app.callback(

@@ -351,6 +351,17 @@ page2_layout = html.Div([
                     
                     # Hidden store for tracking selected signatures
                     dcc.Store(id="selected-signatures-store-2", data=[k for k in data[DEFAULT_SIGNATURES]]),
+                    
+                    # Hidden dropdown - kept in sync with chips, used by other callbacks
+                    html.Div(
+                        dcc.Dropdown(
+                            id='signatures-dropdown-2',
+                            options=[{'label': k, 'value': k} for k in data.keys()],
+                            multi=True,
+                            value=[k for k in data[DEFAULT_SIGNATURES]],
+                        ),
+                        style={"display": "none"}
+                    ),
                 ]
             ),
             
@@ -644,7 +655,7 @@ def show_upload_status(contents, filename):
                 icon=DashIconify(icon="tabler:check-circle", width=18),
                 title="Success",
                 color="green",
-                dismissable=True
+                withCloseButton=True
             )
         except Exception as e:
             return dmc.Alert(
@@ -652,7 +663,7 @@ def show_upload_status(contents, filename):
                 icon=DashIconify(icon="tabler:alert-circle", width=18),
                 title="Error",
                 color="red",
-                dismissable=True
+                withCloseButton=True
             )
     return ""
 
@@ -691,10 +702,15 @@ def set_options(selected_category, contents):
 @app.callback(
     [Output("active-file-display-2", "children"),
      Output("signature-count-2", "children")],
-    Input("dropdown-2", "value")
+    [Input("dropdown-2", "value"),
+     Input("session-2-signatures", "data")]
 )
-def update_active_file_display_2(selected_file):
-    """Update the active file display and signature count"""
+def update_active_file_display_2(selected_file, session_contents):
+    """Update the active file display and signature count (from upload or dropdown)"""
+    if session_contents is not None:
+        df = pd.DataFrame(session_contents["signatures_data"])
+        sig_cols = [c for c in df.columns if c != "Type"]
+        return session_contents["filename"], f"{len(sig_cols)} signatures"
     if selected_file and selected_file in data:
         count = len(data[selected_file])
         return selected_file, f"{count} signatures"
@@ -705,19 +721,22 @@ def update_active_file_display_2(selected_file):
     [Output("signatures-chips-container-2", "children"),
      Output("selected-signatures-store-2", "data")],
     [Input("dropdown-2", "value"),
+     Input("session-2-signatures", "data"),
      Input("signature-search-2", "value"),
      Input("add-all-btn-2", "n_clicks"),
-     Input("clear-all-btn-2", "n_clicks")],
-    State("selected-signatures-store-2", "data"),
+     Input("clear-all-btn-2", "n_clicks"),
+     Input("selected-signatures-store-2", "data")],
     prevent_initial_call=False
 )
-def update_signature_chips_2(selected_file, search_value, add_clicks, clear_clicks, selected_sigs):
-    """Generate signature chips based on file and search/filter"""
-    if not selected_file or selected_file not in data:
+def update_signature_chips_2(selected_file, session_contents, search_value, add_clicks, clear_clicks, selected_sigs):
+    """Generate signature chips based on file/session and search/filter"""
+    if session_contents is not None:
+        df = pd.DataFrame(session_contents["signatures_data"])
+        all_sigs = [c for c in df.columns if c != "Type"]
+    elif selected_file and selected_file in data:
+        all_sigs = data[selected_file]
+    else:
         return [], []
-    
-    # Get all signatures from selected file
-    all_sigs = data[selected_file]
     
     # Initialize selected_sigs if None
     if selected_sigs is None:
@@ -758,22 +777,41 @@ def update_signature_chips_2(selected_file, search_value, add_clicks, clear_clic
 @app.callback(
     Output("selected-signatures-store-2", "data", allow_duplicate=True),
     Input({"type": "sig-chip-2", "index": ALL}, "n_clicks"),
-    State("selected-signatures-store-2", "data"),
+    [State("selected-signatures-store-2", "data"),
+     State("dropdown-2", "value"),
+     State("session-2-signatures", "data"),
+     State("signature-search-2", "value")],
     prevent_initial_call=True
 )
-def toggle_signature_chip_2(n_clicks, selected_sigs):
-    """Handle individual chip clicks to toggle selection"""
-    if not ctx.triggered_id or not selected_sigs:
-        return selected_sigs
-    
-    sig = ctx.triggered_id["index"]
-    
-    if sig in selected_sigs:
-        selected_sigs.remove(sig)
+def toggle_signature_chip_2(n_clicks, selected_sigs, selected_file, session_contents, search_value):
+    """Handle individual chip clicks to toggle selection. Use n_clicks index to find clicked chip."""
+    if session_contents is not None:
+        df = pd.DataFrame(session_contents["signatures_data"])
+        all_sigs = [c for c in df.columns if c != "Type"]
+    elif selected_file and selected_file in data:
+        all_sigs = data[selected_file]
     else:
-        selected_sigs.append(sig)
+        return dash.no_update
+    if not n_clicks or selected_sigs is None:
+        return dash.no_update
+    filtered_sigs = all_sigs
+    if search_value:
+        search_lower = search_value.lower()
+        filtered_sigs = [s for s in all_sigs if search_lower in s.lower()]
     
-    return selected_sigs
+    clicked_idx = next((i for i, c in enumerate(n_clicks) if c), None)
+    if clicked_idx is None or clicked_idx >= len(filtered_sigs):
+        return dash.no_update
+    
+    sig = filtered_sigs[clicked_idx]
+    new_sigs = list(selected_sigs)
+    
+    if sig in new_sigs:
+        new_sigs.remove(sig)
+    else:
+        new_sigs.append(sig)
+    
+    return new_sigs
 
 
 @app.callback(

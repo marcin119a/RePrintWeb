@@ -329,8 +329,8 @@ page4_layout = html.Div([
                                 # Search bar
                                 dmc.TextInput(
                                     id="signature-search-4",
-                                    placeholder="🔍 Search signatures...",
-                                    icon=DashIconify(icon="tabler:search", width=18),
+                                    placeholder="Search signatures...",
+                                    leftSection=DashIconify(icon="tabler:search", width=18),
                                     style={"marginBottom": "0.75rem"},
                                 ),
                                 

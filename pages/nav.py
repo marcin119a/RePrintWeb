@@ -140,6 +140,13 @@ REPO_URL = "https://github.com/wojtowicz-lab/RePrintWeb"
 LICENSE_URL = f"{REPO_URL}/blob/main/LICENSE"
 LICENSE_NAME = "MIT License"
 
+# Grant acknowledgement: the project is co-financed by NAWA (Polish National
+# Agency for Academic Exchange) within the Polish Returns Programme.
+NAWA_GRANT_TEXT = (
+    "The project is co-financed by the Polish National Agency for Academic "
+    "Exchange within the Polish Returns Programme (PPN/PPO/2020/1/00028)."
+)
+
 FOOTER_STYLES = {
     "backgroundColor": "#F8FAFC",
     "borderTop": "1px solid #E5E7EB",
@@ -152,46 +159,75 @@ license_footer = html.Footer(
     style=FOOTER_STYLES,
     children=dmc.Container(
         size="xl",
-        style={
-            "display": "flex",
-            "justifyContent": "space-between",
-            "alignItems": "center",
-            "flexWrap": "wrap",
-            "gap": "0.75rem",
-        },
+        style={"display": "flex", "flexDirection": "column", "gap": "0.75rem"},
         children=[
-            # Left: license
+            # Top: NAWA grant acknowledgement
             dmc.Group(
-                gap=6,
+                gap=10,
                 align="center",
+                justify="center",
+                wrap="wrap",
+                style={
+                    "paddingBottom": "0.75rem",
+                    "borderBottom": "1px solid #E5E7EB",
+                },
                 children=[
-                    DashIconify(icon="tabler:license", width=18, height=18, color="#2563EB"),
-                    dmc.Text("Released under the", size="sm", c="#6B7280"),
+                    html.Img(
+                        src="/assets/NAWA-logo-EN-horizontal.png",
+                        height="32px",
+                    ),
+                    dmc.Text(
+                        NAWA_GRANT_TEXT,
+                        size="xs",
+                        c="#6B7280",
+                        style={"maxWidth": "560px", "textAlign": "center"},
+                    ),
+                ],
+            ),
+            # Bottom: license (left) + source repository (right)
+            html.Div(
+                style={
+                    "display": "flex",
+                    "justifyContent": "space-between",
+                    "alignItems": "center",
+                    "flexWrap": "wrap",
+                    "gap": "0.75rem",
+                },
+                children=[
+                    # Left: license
+                    dmc.Group(
+                        gap=6,
+                        align="center",
+                        children=[
+                            DashIconify(icon="tabler:license", width=18, height=18, color="#2563EB"),
+                            dmc.Text("Released under the", size="sm", c="#6B7280"),
+                            dmc.Anchor(
+                                LICENSE_NAME,
+                                href=LICENSE_URL,
+                                target="_blank",
+                                size="sm",
+                                fw=600,
+                                underline="hover",
+                                c="#2563EB",
+                            ),
+                        ],
+                    ),
+                    # Right: source repository
                     dmc.Anchor(
-                        LICENSE_NAME,
-                        href=LICENSE_URL,
+                        dmc.Group(
+                            gap=4,
+                            align="center",
+                            children=[
+                                DashIconify(icon="tabler:brand-github", width=16, height=16),
+                                dmc.Text("Source on GitHub", size="sm"),
+                            ],
+                        ),
+                        href=REPO_URL,
                         target="_blank",
-                        size="sm",
-                        fw=600,
                         underline="hover",
                         c="#2563EB",
                     ),
                 ],
-            ),
-            # Right: source repository
-            dmc.Anchor(
-                dmc.Group(
-                    gap=4,
-                    align="center",
-                    children=[
-                        DashIconify(icon="tabler:brand-github", width=16, height=16),
-                        dmc.Text("Source on GitHub", size="sm"),
-                    ],
-                ),
-                href=REPO_URL,
-                target="_blank",
-                underline="hover",
-                c="#2563EB",
             ),
         ],
     ),
